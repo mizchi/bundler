@@ -34,7 +34,7 @@ console.log(foo, bar);
 //   eval(built);
 // })();
 
-import { parse } from "./src/babelHelpers";
+import { parse } from "./src/parser";
 import { isPure } from "./src/sideEffect";
 
 const pureCode = `
@@ -69,7 +69,8 @@ assert.ok(pure);
     "/index.js": `
     import a from "./a.js";
     import b from "./b.js";
-    console.log(a);
+    console.log(a, c);
+    import c from "./a.js";
     `,
   });
   const code = await bundler.bundle("/index.js");

@@ -36,11 +36,3 @@ test("bundle", async () => {
   const built$bar = await bundler.bundle("/bar.js", {});
   expect(format(built$bar, { parser: "babel" })).toMatchSnapshot();
 });
-
-test("bundle to js", async () => {
-  const bundler = new Bundler(files);
-  const built = await bundler.bundle("/index.js", {
-    format: "js",
-  });
-  expect(format(built, { parser: "babel" })).toMatchSnapshot();
-});

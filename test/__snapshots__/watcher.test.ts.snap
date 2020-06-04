@@ -2,116 +2,89 @@
 
 exports[`watcher 1`] = `
 "// minibundle generate
-const $$exported = {};
-const $$modules = {
-  \\"/foo.js\\": ($$exports) => {
-    $$exports[\\"default\\"] = \\"foo\\";
-    return $$exports;
+const _$_exported = {};
+const _$_modules = {
+  \\"/foo.js\\": (_$_exports) => {
+    _$_exports.default = \\"foo\\";
+    return _$_exports;
   },
-  \\"/bar.js\\": ($$exports) => {
-    $$exports[\\"default\\"] = \\"bar\\";
-    return $$exports;
+  \\"/bar.js\\": (_$_exports) => {
+    _$_exports.default = \\"bar\\";
+    return _$_exports;
   },
 };
-function $$import(id) {
-  if ($$exported[id]) {
-    return $$exported[id];
-  }
-  $$exported[id] = {};
-  $$modules[id]($$exported[id]);
-  return $$exported[id];
-}
-// additional code
-// evaluate as static module
-$$import(\\"/foo.js\\");
-$$import(\\"/bar.js\\");
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+// evaluate by order or sort?
+_$_import(\\"/foo.js\\");
+_$_import(\\"/bar.js\\");
 
 // -- runner --
-const $$exports = {}; // dummy
-const { default: foo } = $$import(\\"/foo.js\\");
-const { default: bar } = $$import(\\"/bar.js\\");
+const { default: foo } = _$_import(\\"/foo.js\\");
+
+const { default: bar } = _$_import(\\"/bar.js\\");
+
 console.log(foo, bar);
 "
 `;
 
 exports[`watcher 2`] = `
 "// minibundle generate
-const $$exported = {};
-const $$modules = {};
-function $$import(id) {
-  if ($$exported[id]) {
-    return $$exported[id];
-  }
-  $$exported[id] = {};
-  $$modules[id]($$exported[id]);
-  return $$exported[id];
-}
-// additional code
-// evaluate as static module
+const _$_exported = {};
+const _$_modules = {};
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+// evaluate by order or sort?
 // -- runner --
-const $$exports = {}; // dummy
 console.log(1);
 "
 `;
 
 exports[`watcher 2 1`] = `
 "// minibundle generate
-const $$exported = {};
-const $$modules = {
-  \\"/foo.js\\": ($$exports) => {
-    $$exports[\\"default\\"] = \\"foo\\";
-    return $$exports;
+const _$_exported = {};
+const _$_modules = {
+  \\"/foo.js\\": (_$_exports) => {
+    _$_exports.default = \\"foo\\";
+    return _$_exports;
   },
-  \\"/bar.js\\": ($$exports) => {
-    $$exports[\\"default\\"] = \\"bar\\";
-    return $$exports;
+  \\"/bar.js\\": (_$_exports) => {
+    _$_exports.default = \\"bar\\";
+    return _$_exports;
   },
 };
-function $$import(id) {
-  if ($$exported[id]) {
-    return $$exported[id];
-  }
-  $$exported[id] = {};
-  $$modules[id]($$exported[id]);
-  return $$exported[id];
-}
-// additional code
-// evaluate as static module
-$$import(\\"/foo.js\\");
-$$import(\\"/bar.js\\");
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+// evaluate by order or sort?
+_$_import(\\"/foo.js\\");
+_$_import(\\"/bar.js\\");
 
 // -- runner --
-const $$exports = {}; // dummy
-const { default: foo } = $$import(\\"/foo.js\\");
-const { default: bar } = $$import(\\"/bar.js\\");
+const { default: foo } = _$_import(\\"/foo.js\\");
+
+const { default: bar } = _$_import(\\"/bar.js\\");
+
 console.log(foo, bar);
 "
 `;
 
 exports[`watcher 2 2`] = `
 "// minibundle generate
-const $$exported = {};
-const $$modules = {
-  \\"/bar.js\\": ($$exports) => {
-    $$exports[\\"default\\"] = \\"bar\\";
-    return $$exports;
+const _$_exported = {};
+const _$_modules = {
+  \\"/bar.js\\": (_$_exports) => {
+    _$_exports.default = \\"bar\\";
+    return _$_exports;
   },
 };
-function $$import(id) {
-  if ($$exported[id]) {
-    return $$exported[id];
-  }
-  $$exported[id] = {};
-  $$modules[id]($$exported[id]);
-  return $$exported[id];
-}
-// additional code
-// evaluate as static module
-$$import(\\"/bar.js\\");
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+// evaluate by order or sort?
+_$_import(\\"/bar.js\\");
 
 // -- runner --
-const $$exports = {}; // dummy
-const { default: bar } = $$import(\\"/bar.js\\");
+const { default: bar } = _$_import(\\"/bar.js\\");
+
 console.log(bar);
 "
 `;

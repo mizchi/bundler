@@ -4,20 +4,16 @@ import path from "path";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 
-export function transformModule(ast: Program, basepath: string) {
+export function transformToRunnerModule(ast: Program, basepath: string) {
   return transform(ast, basepath, {
     preserveExport: false,
     preserveExternalImport: true,
   });
 }
 
-export function transformEntry(
-  ast: Program,
-  basepath: string,
-  options: { preserveExport: boolean }
-) {
+export function transformToEntry(ast: Program, basepath: string) {
   return transform(ast, basepath, {
-    preserveExport: options.preserveExport,
+    preserveExport: true,
     preserveExternalImport: true,
   });
 }
@@ -31,6 +27,7 @@ export function transform(
   }: { preserveExport: boolean; preserveExternalImport: boolean }
 ) {
   const cloned = t.cloneNode(ast);
+  const newImportStmts: t.VariableDeclaration[] = [];
   traverse(cloned, {
     ImportDeclaration(nodePath) {
       const target = nodePath.node.source.value;
@@ -61,10 +58,13 @@ export function transform(
               );
             })
           ),
-          t.callExpression(t.identifier("$$import"), [t.stringLiteral(absPath)])
+          t.callExpression(t.identifier("_$_import"), [
+            t.stringLiteral(absPath),
+          ])
         ),
       ]);
-      nodePath.replaceWith(newNode as any);
+      newImportStmts.push(newNode);
+      nodePath.replaceWith(t.emptyStatement());
     },
     ExportDefaultDeclaration(nodePath) {
       if (preserveExport) {
@@ -75,11 +75,7 @@ export function transform(
       const newNode = t.expressionStatement(
         t.assignmentExpression(
           "=",
-          t.memberExpression(
-            t.identifier("$$exports"),
-            t.stringLiteral(name),
-            true
-          ),
+          t.memberExpression(t.identifier("_$_exports"), t.identifier(name)),
           right
         )
       );
@@ -98,9 +94,9 @@ export function transform(
         t.assignmentExpression(
           "=",
           t.memberExpression(
-            t.identifier("$$exports"),
-            t.stringLiteral(name),
-            true
+            t.identifier("_$_exports"),
+            t.identifier(name)
+            // true
           ),
           right
         )
@@ -108,5 +104,5 @@ export function transform(
       nodePath.replaceWith(newNode as any);
     },
   });
-  return cloned;
+  return { ...cloned, body: [...newImportStmts, ...cloned.body] };
 }

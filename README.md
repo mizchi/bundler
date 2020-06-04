@@ -6,15 +6,20 @@ Readable output bundler
 
 - [x] Delete build cache and rebuid
 - [x] `import "./xxx";`
+- [x] `export const a = 1;`
 - [ ] Support import-map
-- [ ] Tree shaking (detect side effects)
+- [ ] Tree shaking
+  - [x] detect side effects
+  - [x] Strip unused import
+  - [ ] Remove modules code by treeshake
+  - [ ] Remove unused exports
 - [ ] Inline dynamic import
 - [ ] Dynamic import chunks
 - [ ] Support name resolver
-- [ ] `export * as x from`
+- [ ] `export { a } from "./b"`
+- [ ] `export * as x from "./c"`
 - [ ] `export { a }`
-- [ ] `export { a as b}`
-- [ ] `export { default as x} from "./xxx"`
+- [ ] `export { a as x} from "./xxx"`
 - [ ] Rename
 
 ## LICENSE

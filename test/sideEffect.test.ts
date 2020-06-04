@@ -1,6 +1,6 @@
 import assert from "assert";
 
-import { parse } from "../src/babelHelpers";
+import { parse } from "../src/parser";
 import { isPure } from "../src/sideEffect";
 
 const pureCode = `

@@ -1,15 +1,13 @@
 import type { Program } from "@babel/types";
 
 export type BundleOptions = {
-  format?: "es" | "js";
-  exposeImport?: boolean;
+  exposeToGlobal?: string | null;
   preserveExternalImport?: boolean;
 };
 
 export type InternalOptions = {
-  preserveExport: boolean;
   preserveExternalImport: boolean;
-  exposeImport: boolean;
+  exposeToGlobal: string | null;
 };
 
 export type Specifier = {

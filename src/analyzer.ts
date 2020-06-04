@@ -4,7 +4,7 @@ import type { Export, Import, Specifier } from "./types";
 import path from "path";
 import traverse from "@babel/traverse";
 
-export function getExports(
+export function analyzeScope(
   ast: Program,
   basepath: string
 ): { exports: Export[]; imports: Import[] } {

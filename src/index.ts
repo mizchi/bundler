@@ -2,9 +2,10 @@ import type { IPromisesAPI } from "memfs/lib/promises";
 import type { BundleOptions, InternalOptions, ParsedModule } from "./types";
 
 import path from "path";
-import { generateCode, parse } from "./babelHelpers";
-import { getExports } from "./getExports";
-import { transformModule, transformEntry } from "./transformer";
+import { generate } from "./generator";
+import { parse } from "./parser";
+import { analyzeScope } from "./analyzer";
+import { transformToRunnerModule, transformToEntry } from "./transformer";
 import { treeshake } from "./treeshaker";
 import { createMemoryFs, readFile } from "./memfsHelpers";
 import { getOrderFromModules } from "./getOrderFromModules";
@@ -19,15 +20,10 @@ export class Bundler {
   }
   public async bundle(
     entry: string,
-    {
-      format = "es",
-      exposeImport = false,
-      preserveExternalImport = true,
-    }: BundleOptions = {}
+    { exposeToGlobal = null, preserveExternalImport = true }: BundleOptions = {}
   ) {
     const internalOptions: InternalOptions = {
-      exposeImport,
-      preserveExport: format === "es",
+      exposeToGlobal: exposeToGlobal,
       preserveExternalImport,
     };
     await this.addModule(entry);
@@ -62,7 +58,7 @@ export class Bundler {
     const ast = parse(raw, filepath);
 
     // extract before transform
-    const { imports, exports } = getExports(ast, basepath);
+    const { imports, exports } = analyzeScope(ast, basepath);
     const hasSideEffect = !isPure(ast);
 
     // console.log("[addModule]", filepath, imports, exports);
@@ -81,10 +77,7 @@ export class Bundler {
     }
   }
 
-  private async emit(
-    entryPath: string,
-    { exposeImport, preserveExport }: InternalOptions
-  ) {
+  private async emit(entryPath: string, { exposeToGlobal }: InternalOptions) {
     const entryMod = this.modulesMap.get(entryPath)!;
     const basepath = path.dirname(entryMod.filepath);
     // TODO: remove unused
@@ -95,56 +88,38 @@ export class Bundler {
     );
     // TODO: tree shake here!
 
-    const importCodes = outputOrder
-      .filter((filepath) => filepath !== entryPath)
-      .map((filepath) => {
-        return `$$import("${filepath}");`;
-      })
-      .join("\n");
-
     const moduleCodes = outputOrder
       .filter((filepath) => filepath !== entryPath)
       .map((filepath) => {
         const ast = this.modulesMap.get(filepath)!.ast;
         const treeshaked = treeshake(ast, filepath, [], this.modulesMap);
-        const runner = transformModule(treeshaked, basepath);
-        const code = generateCode(runner);
-        return `"${filepath}": ($$exports) => { ${code}; return $$exports;}`;
+        const runner = transformToRunnerModule(treeshaked, basepath);
+        const code = generate(runner);
+        return `"${filepath}": (_$_exports) => { ${code}; return _$_exports;}`;
       })
       .join(",");
 
     let additianalCode = "";
-    if (exposeImport) {
-      additianalCode += `globalThis.$$import = $$import;`;
+    if (exposeToGlobal) {
+      additianalCode += `/* Expose import */ globalThis.${exposeToGlobal} = {import: _$_import};`;
     }
 
     // retransform entry for runner
-    const ast = parse(entryMod.raw, entryMod.filepath);
-    const treeshaked = treeshake(ast, entryPath, [], this.modulesMap);
-    const runner = transformEntry(treeshaked, basepath, {
-      preserveExport,
-    });
-    const entryCode = generateCode(runner);
+    const treeshaked = treeshake(entryMod.ast, entryPath, [], this.modulesMap);
+    const runner = transformToEntry(treeshaked, basepath);
+    const entryCode = generate(runner);
 
     return `// minibundle generate
-  const $$exported = {};
-  const $$modules = { ${moduleCodes} };
-  function $$import(id){
-    if ($$exported[id]) {
-      return $$exported[id];
-    }
-    $$exported[id] = {};
-    $$modules[id]($$exported[id]);
-    return $$exported[id];
-  }
-  ${additianalCode};
+const _$_exported = {};
+const _$_import = (id) => _$_exported[id] || _$_modules[id](_$_exported[id] = {});
 
-  // evaluate as static module
-  ${importCodes};
-  
-  // -- runner --
-  const $$exports = {}; // dummy
-  ${entryCode};
-  `;
+const _$_modules = { ${moduleCodes} };
+
+${additianalCode};
+
+// -- entry --
+
+${entryCode};
+`;
   }
 }
