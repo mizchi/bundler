@@ -5,6 +5,7 @@ import path from "path";
 import { generateCode, parse } from "./babelHelpers";
 import { getExports } from "./getExports";
 import { transformModule, transformEntry } from "./transformer";
+import { treeshake } from "./treeshaker";
 import { createMemoryFs, readFile } from "./memfsHelpers";
 import { getOrderFromModules } from "./getOrderFromModules";
 import { isPure } from "./sideEffect";
@@ -64,8 +65,6 @@ export class Bundler {
     const { imports, exports } = getExports(ast, basepath);
     const hasSideEffect = !isPure(ast);
 
-    transformModule(ast, basepath);
-
     // console.log("[addModule]", filepath, imports, exports);
     this.modulesMap.set(filepath, {
       raw,
@@ -76,31 +75,40 @@ export class Bundler {
       hasSideEffect,
     });
 
+    // console.log("used", filepath, JSON.stringify(imports, null, 2));
     for (const i of imports) {
       await this.addModule(i.filepath);
     }
   }
 
   private async emit(
-    entry: string,
+    entryPath: string,
     { exposeImport, preserveExport }: InternalOptions
   ) {
-    const entryMod = this.modulesMap.get(entry)!;
+    const entryMod = this.modulesMap.get(entryPath)!;
     const basepath = path.dirname(entryMod.filepath);
-    const outputOrder: string[] = getOrderFromModules(this.modulesMap, entry, [
-      entry,
-    ]);
+    // TODO: remove unused
+    const outputOrder: string[] = getOrderFromModules(
+      this.modulesMap,
+      entryPath,
+      [entryPath]
+    );
+    // TODO: tree shake here!
+
     const importCodes = outputOrder
-      .filter((filepath) => filepath !== entry)
+      .filter((filepath) => filepath !== entryPath)
       .map((filepath) => {
         return `$$import("${filepath}");`;
       })
       .join("\n");
 
     const moduleCodes = outputOrder
-      .filter((filepath) => filepath !== entry)
+      .filter((filepath) => filepath !== entryPath)
       .map((filepath) => {
-        const code = generateCode(this.modulesMap.get(filepath)!.ast);
+        const ast = this.modulesMap.get(filepath)!.ast;
+        const treeshaked = treeshake(ast, filepath, [], this.modulesMap);
+        const runner = transformModule(treeshaked, basepath);
+        const code = generateCode(runner);
         return `"${filepath}": ($$exports) => { ${code}; return $$exports;}`;
       })
       .join(",");
@@ -112,10 +120,11 @@ export class Bundler {
 
     // retransform entry for runner
     const ast = parse(entryMod.raw, entryMod.filepath);
-    transformEntry(ast, basepath, {
+    const treeshaked = treeshake(ast, entryPath, [], this.modulesMap);
+    const runner = transformEntry(treeshaked, basepath, {
       preserveExport,
     });
-    const entryCode = generateCode(ast);
+    const entryCode = generateCode(runner);
 
     return `// minibundle generate
   const $$exported = {};
@@ -128,7 +137,6 @@ export class Bundler {
     $$modules[id]($$exported[id]);
     return $$exported[id];
   }
-  // additional code
   ${additianalCode};
 
   // evaluate as static module

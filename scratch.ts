@@ -57,7 +57,21 @@ const v7 = true;
 const ast = parse(pureCode, "/x.js");
 
 // @ts-ignore
-const pure = isPure(ast.program as any);
+const pure = isPure(ast);
 
 assert.ok(pure);
 // console.log(has);
+
+(async () => {
+  const bundler = new Bundler({
+    "/a.js": "console.log(1)",
+    "/b.js": "export default 1;",
+    "/index.js": `
+    import a from "./a.js";
+    import b from "./b.js";
+    console.log(a);
+    `,
+  });
+  const code = await bundler.bundle("/index.js");
+  console.log(format(code, { parser: "babel" }));
+})();

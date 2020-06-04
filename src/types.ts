@@ -12,8 +12,15 @@ export type InternalOptions = {
   exposeImport: boolean;
 };
 
+export type Specifier = {
+  localName: string;
+  importedName: string;
+  used: boolean;
+};
+
 export type Import = {
   filepath: string;
+  specifiers: Specifier[];
 };
 
 export type Export = {

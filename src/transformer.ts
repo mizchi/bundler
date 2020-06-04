@@ -30,7 +30,8 @@ export function transform(
     preserveExternalImport,
   }: { preserveExport: boolean; preserveExternalImport: boolean }
 ) {
-  traverse(ast, {
+  const cloned = t.cloneNode(ast);
+  traverse(cloned, {
     ImportDeclaration(nodePath) {
       const target = nodePath.node.source.value;
       if (preserveExternalImport && target.startsWith("http")) {
@@ -107,4 +108,5 @@ export function transform(
       nodePath.replaceWith(newNode as any);
     },
   });
+  return cloned;
 }
