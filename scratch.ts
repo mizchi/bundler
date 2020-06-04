@@ -1,5 +1,6 @@
 import { Bundler } from "./src/index";
 import { format } from "prettier";
+import assert from "assert";
 
 // runtime
 const files = {
@@ -21,14 +22,42 @@ import bar from "./bar.js";
 
 export const x: number = c;
 export default 1;
-
 console.log(foo, bar);
+
 `,
 };
 
-(async () => {
-  const bundler = new Bundler(files);
-  const built = await bundler.bundle("/index.js", { format: "js" });
-  console.log(format(built, { parser: "babel" }));
-  eval(built);
-})();
+// (async () => {
+//   const bundler = new Bundler(files);
+//   const built = await bundler.bundle("/index.js", { format: "js" });
+//   console.log(format(built, { parser: "babel" }));
+//   eval(built);
+// })();
+
+import { parse } from "./src/babelHelpers";
+import { isPure } from "./src/sideEffect";
+
+const pureCode = `
+import "./foo.js";
+function b() {};
+class X {};
+export function a() {};
+export class C {};
+
+// variable
+const v1 = 1;
+const v2 = () => {};
+const v3 = function() {}
+const v4 = function x() {}
+const v5 = class {};
+const v6 = "xxx";
+const v7 = true;
+`;
+
+const ast = parse(pureCode, "/x.js");
+
+// @ts-ignore
+const pure = isPure(ast.program as any);
+
+assert.ok(pure);
+// console.log(has);

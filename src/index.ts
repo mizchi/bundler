@@ -7,6 +7,7 @@ import { getExports } from "./getExports";
 import { transformModule, transformEntry } from "./transformer";
 import { createMemoryFs, readFile } from "./memfsHelpers";
 import { getOrderFromModules } from "./getOrderFromModules";
+import { isPure } from "./sideEffect";
 
 export class Bundler {
   private modulesMap = new Map<string, ParsedModule>();
@@ -61,6 +62,8 @@ export class Bundler {
 
     // extract before transform
     const { imports, exports } = getExports(ast, basepath);
+    const hasSideEffect = !isPure(ast);
+
     transformModule(ast, basepath);
 
     // console.log("[addModule]", filepath, imports, exports);
@@ -70,6 +73,7 @@ export class Bundler {
       ast,
       imports,
       exports,
+      hasSideEffect,
     });
 
     for (const i of imports) {

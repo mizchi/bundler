@@ -26,4 +26,5 @@ export type ParsedModule = {
   filepath: string;
   imports: Import[];
   exports: Export[];
+  hasSideEffect: boolean;
 };

@@ -8,9 +8,9 @@ export function generateCode(ast: Program): string {
 }
 
 export function parse(code: string, filepath: string): Program {
-  return (parseAsBabel(code, {
+  return parseAsBabel(code, {
     sourceFilename: filepath,
     sourceType: "module",
     plugins: ["typescript", "jsx"],
-  }) as any) as Program;
+  }).program as Program;
 }
