@@ -1,0 +1,117 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`watcher 1`] = `
+"// minibundle generate
+const $$exported = {};
+const $$modules = {
+  \\"/foo.js\\": ($$exports) => {
+    $$exports[\\"default\\"] = \\"foo\\";
+    return $$exports;
+  },
+  \\"/bar.js\\": ($$exports) => {
+    $$exports[\\"default\\"] = \\"bar\\";
+    return $$exports;
+  },
+};
+function $$import(id) {
+  if ($$exported[id]) {
+    return $$exported[id];
+  }
+  $$exported[id] = {};
+  $$modules[id]($$exported[id]);
+  return $$exported[id];
+}
+// additional code
+// evaluate as static module
+$$import(\\"/foo.js\\");
+$$import(\\"/bar.js\\");
+
+// -- runner --
+const $$exports = {}; // dummy
+const { default: foo } = $$import(\\"/foo.js\\");
+const { default: bar } = $$import(\\"/bar.js\\");
+console.log(foo, bar);
+"
+`;
+
+exports[`watcher 2`] = `
+"// minibundle generate
+const $$exported = {};
+const $$modules = {};
+function $$import(id) {
+  if ($$exported[id]) {
+    return $$exported[id];
+  }
+  $$exported[id] = {};
+  $$modules[id]($$exported[id]);
+  return $$exported[id];
+}
+// additional code
+// evaluate as static module
+// -- runner --
+const $$exports = {}; // dummy
+console.log(1);
+"
+`;
+
+exports[`watcher 2 1`] = `
+"// minibundle generate
+const $$exported = {};
+const $$modules = {
+  \\"/foo.js\\": ($$exports) => {
+    $$exports[\\"default\\"] = \\"foo\\";
+    return $$exports;
+  },
+  \\"/bar.js\\": ($$exports) => {
+    $$exports[\\"default\\"] = \\"bar\\";
+    return $$exports;
+  },
+};
+function $$import(id) {
+  if ($$exported[id]) {
+    return $$exported[id];
+  }
+  $$exported[id] = {};
+  $$modules[id]($$exported[id]);
+  return $$exported[id];
+}
+// additional code
+// evaluate as static module
+$$import(\\"/foo.js\\");
+$$import(\\"/bar.js\\");
+
+// -- runner --
+const $$exports = {}; // dummy
+const { default: foo } = $$import(\\"/foo.js\\");
+const { default: bar } = $$import(\\"/bar.js\\");
+console.log(foo, bar);
+"
+`;
+
+exports[`watcher 2 2`] = `
+"// minibundle generate
+const $$exported = {};
+const $$modules = {
+  \\"/bar.js\\": ($$exports) => {
+    $$exports[\\"default\\"] = \\"bar\\";
+    return $$exports;
+  },
+};
+function $$import(id) {
+  if ($$exported[id]) {
+    return $$exported[id];
+  }
+  $$exported[id] = {};
+  $$modules[id]($$exported[id]);
+  return $$exported[id];
+}
+// additional code
+// evaluate as static module
+$$import(\\"/bar.js\\");
+
+// -- runner --
+const $$exports = {}; // dummy
+const { default: bar } = $$import(\\"/bar.js\\");
+console.log(bar);
+"
+`;

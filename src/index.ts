@@ -2,15 +2,16 @@ import type { IPromisesAPI } from "memfs/lib/promises";
 import type { BundleOptions, InternalOptions, ParsedModule } from "./types";
 
 import path from "path";
-import { generateRuntimeCode, parse } from "./babelHelpers";
+import { generateCode, parse } from "./babelHelpers";
 import { getExports } from "./getExports";
-import { transformToNonEsm } from "./transformToNoEsm";
+import { transformModule, transformEntry } from "./transformer";
 import { createMemoryFs, readFile } from "./memfsHelpers";
 import { getOrderFromModules } from "./getOrderFromModules";
 
 export class Bundler {
-  public modulesMap = new Map<string, ParsedModule>();
-  private fs: IPromisesAPI;
+  private modulesMap = new Map<string, ParsedModule>();
+  public fs: IPromisesAPI;
+
   constructor(public files: { [k: string]: string }) {
     this.fs = createMemoryFs(files);
   }
@@ -27,15 +28,31 @@ export class Bundler {
       preserveExport: format === "es",
       preserveExternalImport,
     };
-    await this.addModule(entry, internalOptions);
+    await this.addModule(entry);
     return await this.emit("/index.js", internalOptions);
   }
 
-  async addModule(filepath: string, opts: InternalOptions): Promise<void> {
+  public async updateModule(filepath: string, nextContent: string) {
+    await this.fs.writeFile(filepath, nextContent);
+    this.modulesMap.delete(filepath);
+    this.addModule(filepath);
+  }
+
+  // TODO: need this?
+  async deleteRecursive(filepath: string) {
+    const cached = this.modulesMap.get(filepath)!;
+    if (cached) {
+      for (const i of cached.imports) {
+        this.deleteRecursive(i.filepath);
+        this.modulesMap.delete(i.filepath);
+      }
+    }
+  }
+
+  private async addModule(filepath: string): Promise<void> {
     if (this.modulesMap.has(filepath)) {
       return;
     }
-    console.log("[addModule]", filepath);
 
     const basepath = path.dirname(filepath);
 
@@ -44,9 +61,9 @@ export class Bundler {
 
     // extract before transform
     const { imports, exports } = getExports(ast, basepath);
-    // should call after getExports()
-    transformToNonEsm(ast, basepath, opts);
+    transformModule(ast, basepath);
 
+    // console.log("[addModule]", filepath, imports, exports);
     this.modulesMap.set(filepath, {
       raw,
       filepath,
@@ -56,15 +73,16 @@ export class Bundler {
     });
 
     for (const i of imports) {
-      await this.addModule(i.filepath, {
-        ...opts,
-        preserveExport: false,
-      });
+      await this.addModule(i.filepath);
     }
   }
 
-  private async emit(entry: string, { exposeImport }: InternalOptions) {
+  private async emit(
+    entry: string,
+    { exposeImport, preserveExport }: InternalOptions
+  ) {
     const entryMod = this.modulesMap.get(entry)!;
+    const basepath = path.dirname(entryMod.filepath);
     const outputOrder: string[] = getOrderFromModules(this.modulesMap, entry, [
       entry,
     ]);
@@ -78,7 +96,7 @@ export class Bundler {
     const moduleCodes = outputOrder
       .filter((filepath) => filepath !== entry)
       .map((filepath) => {
-        const code = generateRuntimeCode(this.modulesMap.get(filepath)!.ast);
+        const code = generateCode(this.modulesMap.get(filepath)!.ast);
         return `"${filepath}": ($$exports) => { ${code}; return $$exports;}`;
       })
       .join(",");
@@ -87,7 +105,13 @@ export class Bundler {
     if (exposeImport) {
       additianalCode += `globalThis.$$import = $$import;`;
     }
-    const entryCode = generateRuntimeCode(entryMod!.ast);
+
+    // retransform entry for runner
+    const ast = parse(entryMod.raw, entryMod.filepath);
+    transformEntry(ast, basepath, {
+      preserveExport,
+    });
+    const entryCode = generateCode(ast);
 
     return `// minibundle generate
   const $$exported = {};

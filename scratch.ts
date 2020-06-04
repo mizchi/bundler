@@ -15,6 +15,7 @@ export const b = "b";
 export const a = "a";
 `,
   "/index.js": `
+import "./bar.js";
 import foo, {a, b as c} from "./foo.js";
 import bar from "./bar.js";
 

@@ -4,7 +4,25 @@ import path from "path";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 
-export async function transformToNonEsm(
+export function transformModule(ast: Program, basepath: string) {
+  return transform(ast, basepath, {
+    preserveExport: false,
+    preserveExternalImport: true,
+  });
+}
+
+export function transformEntry(
+  ast: Program,
+  basepath: string,
+  options: { preserveExport: boolean }
+) {
+  return transform(ast, basepath, {
+    preserveExport: options.preserveExport,
+    preserveExternalImport: true,
+  });
+}
+
+export function transform(
   ast: Program,
   basepath: string,
   {
