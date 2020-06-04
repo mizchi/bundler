@@ -1,5 +1,5 @@
 import { Bundler } from "./../src/index";
-import prettier from "prettier";
+import { format } from "prettier";
 
 // runtime
 const files = {
@@ -25,14 +25,22 @@ console.log(foo, bar);
 `,
 };
 
-async function main() {
+test("bundle", async () => {
+  const bundler = new Bundler(files);
+  const built = await bundler.bundle("/index.js", {});
+  expect(format(built, { parser: "babel" })).toMatchSnapshot();
+
+  const built$foo = await bundler.bundle("/foo.js", {});
+  expect(format(built$foo, { parser: "babel" })).toMatchSnapshot();
+
+  const built$bar = await bundler.bundle("/bar.js", {});
+  expect(format(built$bar, { parser: "babel" })).toMatchSnapshot();
+});
+
+test("bundle to js", async () => {
   const bundler = new Bundler(files);
   const built = await bundler.bundle("/index.js", {
     format: "js",
-    exposeImport: true,
   });
-  console.log(prettier.format(built));
-  console.log("--- eval ----");
-  eval(built);
-}
-main();
+  expect(format(built, { parser: "babel" })).toMatchSnapshot();
+});

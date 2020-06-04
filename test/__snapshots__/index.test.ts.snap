@@ -1,0 +1,165 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`bundle 1`] = `
+"// minibundle generate
+const $$exported = {};
+const $$modules = {
+  \\"/foo.js\\": ($$exports) => {
+    console.log(\\"eval foo once\\");
+    $$exports[\\"default\\"] = \\"foo$default\\";
+    $$exports[\\"b\\"] = \\"b\\";
+    $$exports[\\"a\\"] = \\"a\\";
+    return $$exports;
+  },
+  \\"/bar.js\\": ($$exports) => {
+    const { default: foo } = $$import(\\"/foo.js\\");
+    console.log(\\"eval bar once\\");
+    $$exports[\\"default\\"] = \\"bar$\\" + foo;
+    return $$exports;
+  },
+};
+function $$import(id) {
+  if ($$exported[id]) {
+    return $$exported[id];
+  }
+  $$exported[id] = {};
+  $$modules[id]($$exported[id]);
+  return $$exported[id];
+}
+// additional code
+// evaluate as static module
+$$import(\\"/foo.js\\");
+$$import(\\"/bar.js\\");
+
+// -- runner --
+const $$exports = {}; // dummy
+const { default: foo, a: a, b: c } = $$import(\\"/foo.js\\");
+const { default: bar } = $$import(\\"/bar.js\\");
+export const x: number = c;
+export default 1;
+console.log(foo, bar);
+"
+`;
+
+exports[`bundle 2`] = `
+"// minibundle generate
+const $$exported = {};
+const $$modules = {
+  \\"/foo.js\\": ($$exports) => {
+    console.log(\\"eval foo once\\");
+    $$exports[\\"default\\"] = \\"foo$default\\";
+    $$exports[\\"b\\"] = \\"b\\";
+    $$exports[\\"a\\"] = \\"a\\";
+    return $$exports;
+  },
+  \\"/bar.js\\": ($$exports) => {
+    const { default: foo } = $$import(\\"/foo.js\\");
+    console.log(\\"eval bar once\\");
+    $$exports[\\"default\\"] = \\"bar$\\" + foo;
+    return $$exports;
+  },
+};
+function $$import(id) {
+  if ($$exported[id]) {
+    return $$exported[id];
+  }
+  $$exported[id] = {};
+  $$modules[id]($$exported[id]);
+  return $$exported[id];
+}
+// additional code
+// evaluate as static module
+$$import(\\"/foo.js\\");
+$$import(\\"/bar.js\\");
+
+// -- runner --
+const $$exports = {}; // dummy
+const { default: foo, a: a, b: c } = $$import(\\"/foo.js\\");
+const { default: bar } = $$import(\\"/bar.js\\");
+export const x: number = c;
+export default 1;
+console.log(foo, bar);
+"
+`;
+
+exports[`bundle 3`] = `
+"// minibundle generate
+const $$exported = {};
+const $$modules = {
+  \\"/foo.js\\": ($$exports) => {
+    console.log(\\"eval foo once\\");
+    $$exports[\\"default\\"] = \\"foo$default\\";
+    $$exports[\\"b\\"] = \\"b\\";
+    $$exports[\\"a\\"] = \\"a\\";
+    return $$exports;
+  },
+  \\"/bar.js\\": ($$exports) => {
+    const { default: foo } = $$import(\\"/foo.js\\");
+    console.log(\\"eval bar once\\");
+    $$exports[\\"default\\"] = \\"bar$\\" + foo;
+    return $$exports;
+  },
+};
+function $$import(id) {
+  if ($$exported[id]) {
+    return $$exported[id];
+  }
+  $$exported[id] = {};
+  $$modules[id]($$exported[id]);
+  return $$exported[id];
+}
+// additional code
+// evaluate as static module
+$$import(\\"/foo.js\\");
+$$import(\\"/bar.js\\");
+
+// -- runner --
+const $$exports = {}; // dummy
+const { default: foo, a: a, b: c } = $$import(\\"/foo.js\\");
+const { default: bar } = $$import(\\"/bar.js\\");
+export const x: number = c;
+export default 1;
+console.log(foo, bar);
+"
+`;
+
+exports[`bundle to js 1`] = `
+"// minibundle generate
+const $$exported = {};
+const $$modules = {
+  \\"/foo.js\\": ($$exports) => {
+    console.log(\\"eval foo once\\");
+    $$exports[\\"default\\"] = \\"foo$default\\";
+    $$exports[\\"b\\"] = \\"b\\";
+    $$exports[\\"a\\"] = \\"a\\";
+    return $$exports;
+  },
+  \\"/bar.js\\": ($$exports) => {
+    const { default: foo } = $$import(\\"/foo.js\\");
+    console.log(\\"eval bar once\\");
+    $$exports[\\"default\\"] = \\"bar$\\" + foo;
+    return $$exports;
+  },
+};
+function $$import(id) {
+  if ($$exported[id]) {
+    return $$exported[id];
+  }
+  $$exported[id] = {};
+  $$modules[id]($$exported[id]);
+  return $$exported[id];
+}
+// additional code
+// evaluate as static module
+$$import(\\"/foo.js\\");
+$$import(\\"/bar.js\\");
+
+// -- runner --
+const $$exports = {}; // dummy
+const { default: foo, a: a, b: c } = $$import(\\"/foo.js\\");
+const { default: bar } = $$import(\\"/bar.js\\");
+$$exports[\\"x\\"] = c;
+$$exports[\\"default\\"] = 1;
+console.log(foo, bar);
+"
+`;
