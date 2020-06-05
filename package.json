@@ -8,7 +8,7 @@
     "test": "jest"
   },
   "typings": "index.d.ts",
-  "main": "dist/uniroll.js",
+  "main": "dist/bundler.js",
   "dependencies": {
     "@babel/generator": "^7.10.2",
     "@babel/parser": "^7.10.2",
