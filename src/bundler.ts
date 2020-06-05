@@ -1,11 +1,12 @@
 import type { IPromisesAPI } from "memfs/lib/promises";
+import { Volume } from "memfs";
+import createFs from "memfs/lib/promises";
+
 import path from "path";
 import { analyzeModule } from "./analyzer";
-import { createMemoryFs, readFile } from "./memfsHelpers";
 import { parse } from "./parser";
-import { isPure } from "./sideEffect";
 import type { BundleOptions, AnalyzedChunk } from "./types";
-import { aggregateChunks } from "./aggregateChunks";
+import { ModulesMap } from "./types";
 import { optimize } from "./optimizer";
 import { render } from "./renderer";
 
@@ -18,11 +19,11 @@ export class Bundler {
   }
   public async bundle(
     entry: string,
-    { exposeToGlobal = null }: BundleOptions = {}
+    { exposeToGlobal = null, optimize: _optimize = true }: BundleOptions = {}
   ) {
     await this.addModule(entry);
     const chunks = aggregateChunks(this.modulesMap, entry);
-    const optimizedChunks = optimize(chunks);
+    const optimizedChunks = _optimize ? optimize(chunks) : chunks;
     return render(entry, optimizedChunks, { exposeToGlobal: exposeToGlobal });
   }
 
@@ -52,9 +53,7 @@ export class Bundler {
     const raw = await readFile(this.fs, filepath);
     const ast = parse(raw, filepath);
 
-    // extract before transform
-    const { imports, exports } = analyzeModule(ast, basepath);
-    const hasSideEffect = !isPure(ast);
+    const { imports, exports, pure } = analyzeModule(ast, basepath);
 
     this.modulesMap.set(filepath, {
       raw,
@@ -62,7 +61,7 @@ export class Bundler {
       ast,
       imports,
       exports,
-      hasSideEffect,
+      pure,
     });
 
     // console.log("used", filepath, JSON.stringify(imports, null, 2));
@@ -70,4 +69,40 @@ export class Bundler {
       await this.addModule(i.filepath);
     }
   }
+}
+
+export function aggregateChunks(modulesMap: ModulesMap, entryPath: string) {
+  const entryMod = modulesMap.get(entryPath)!;
+  const chunks: AnalyzedChunk[] = [];
+  _aggregate(entryMod);
+  return chunks;
+
+  function _aggregate(mod: AnalyzedChunk) {
+    if (chunks.find((x) => x.filepath === mod.filepath)) {
+      return chunks;
+    }
+
+    for (const imp of mod.imports) {
+      if (chunks.find((x) => x.filepath === imp.filepath)) {
+        continue;
+      }
+      const child = modulesMap.get(imp.filepath)!;
+      _aggregate(child);
+    }
+    chunks.push(mod);
+    return chunks;
+  }
+}
+
+// helper
+export function createMemoryFs(files: { [k: string]: string }): IPromisesAPI {
+  const vol = Volume.fromJSON(files, "/");
+  return createFs(vol) as IPromisesAPI;
+}
+
+export async function readFile(fs: IPromisesAPI, filepath: string) {
+  const raw = (await fs.readFile(filepath, {
+    encoding: "utf-8",
+  })) as string;
+  return raw;
 }

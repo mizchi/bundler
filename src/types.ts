@@ -3,6 +3,7 @@ import type { Program } from "@babel/types";
 export type BundleOptions = {
   exposeToGlobal?: string | null;
   preserveExternalImport?: boolean;
+  optimize?: boolean;
 };
 
 export type InternalOptions = {
@@ -32,7 +33,7 @@ export type AnalyzedChunk = {
   filepath: string;
   imports: Import[];
   exports: Export[];
-  hasSideEffect: boolean;
+  pure: boolean;
 };
 
 export type ModulesMap = Map<string, AnalyzedChunk>;

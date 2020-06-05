@@ -32,3 +32,16 @@ test("drop unused import", async () => {
   const code = await bundler.bundle("/index.js");
   assert.ok(!code.includes("/foo.js"));
 });
+
+test("do not drop unused import on optimize: false", async () => {
+  const bundler = new Bundler({
+    "/foo.js": `export default 1`,
+    "/index.js": `
+    import foo from "./foo.js";
+    const a = {foo: 1}
+    console.log(a.foo);
+    `,
+  });
+  const code = await bundler.bundle("/index.js", { optimize: false });
+  assert.ok(code.includes("/foo.js"));
+});

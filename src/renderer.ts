@@ -1,5 +1,4 @@
 import path from "path";
-import { generate } from "./generator";
 import { transformToEntryRunner, transformToModuleRunner } from "./transformer";
 import type { AnalyzedChunk } from "./types";
 
@@ -33,11 +32,20 @@ export function render(
   return runnerTemplate(code, additianalCode, entryCode);
 }
 
+import type { Program } from "@babel/types";
+
+import generateAsBabel from "@babel/generator";
+
+export function generate(ast: Program): string {
+  const gen = generateAsBabel(ast);
+  return gen.code;
+}
+
 const runnerTemplate = (
   moduleCodes: string,
   additianalCode: string,
   entryCode: string
-) => `// minibundle generate
+) => `// @mizchi/bundler generate
 const _$_exported = {};
 const _$_import = (id) => _$_exported[id] || _$_modules[id](_$_exported[id] = {});
 const _$_modules = ${moduleCodes};

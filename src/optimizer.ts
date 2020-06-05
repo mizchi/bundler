@@ -2,8 +2,7 @@ import path from "path";
 import type { AnalyzedChunk } from "./types";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
-import { isPureNode } from "./sideEffect";
-import { analyzeModule } from "./analyzer";
+import { analyzeModule, isPureNode } from "./analyzer";
 
 export function optimize(chunks: AnalyzedChunk[]) {
   return eliminateUnusedImports(treeshakeExports(chunks));
@@ -64,8 +63,8 @@ export function eliminateUnusedImports(
       ImportDeclaration(nodePath) {
         const target = nodePath.node.source.value;
         const abspath = path.join(basepath, target);
-        const hasSideEffect = hasSideEffectRecuresive(abspath, chunks);
-        if (hasSideEffect) {
+        const pure = isPureRec(abspath, chunks);
+        if (!pure) {
           return;
         }
         const import_ = chunk.imports.find((i) => i.filepath === abspath)!;
@@ -102,15 +101,9 @@ export function eliminateUnusedImports(
   return survived;
 }
 
-function hasSideEffectRecuresive(filepath: string, chunks: AnalyzedChunk[]) {
+function isPureRec(filepath: string, chunks: AnalyzedChunk[]): boolean {
   const mod = chunks.find((x) => x.filepath === filepath)!;
-  if (mod.hasSideEffect) {
-    return true;
-  }
-  for (const i of mod.imports) {
-    if (hasSideEffectRecuresive(i.filepath, chunks)) {
-      return true;
-    }
-  }
-  return false;
+  return (
+    mod.pure && mod.imports.every((imp) => isPureRec(imp.filepath, chunks))
+  );
 }
