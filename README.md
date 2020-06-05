@@ -5,6 +5,7 @@ My hobby bundler like webpack/rollup. Do not use production.
 ## Features
 
 - Run universal
+- Modern JS(ES2019) Target
 - only handle ESM
 - readable output(but loose)
 - treeshake
@@ -43,9 +44,10 @@ const _$_modules = {
 const { default: foo } = _$_import("/foo.js");
 
 console.log(foo);
+export const index = 1;
 ```
 
-`@mizchi/bundler` left entry `exports`
+Entry exports are left.
 
 ## TODO
 
@@ -57,6 +59,7 @@ console.log(foo);
   - [x] Strip unused import
   - [x] Remove modules code by treeshake
   - [x] Remove unused exports
+- [ ]
 - [ ] Support import-map
 - [ ] Inline dynamic import
 - [ ] Dynamic import chunks

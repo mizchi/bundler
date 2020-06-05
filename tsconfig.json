@@ -1,5 +1,9 @@
 {
+  "include": ["src"],
   "compilerOptions": {
+    "outDir": "lib",
+    "rootDir": "src",
+    "declaration": true,
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
 
     /* Basic Options */

@@ -8,7 +8,8 @@
     "test": "jest"
   },
   "typings": "index.d.ts",
-  "main": "dist/bundler.js",
+  "main": "lib/index.js",
+  "module": "dist/bundler.js",
   "dependencies": {
     "@babel/generator": "^7.10.2",
     "@babel/parser": "^7.10.2",
