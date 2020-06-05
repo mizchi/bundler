@@ -1,10 +1,10 @@
 {
   "name": "@mizchi/bundler",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "scripts": {
     "prepublishOnly": "yarn build",
-    "build": "webpack --mode production",
+    "build": "tsc -p . && webpack --mode production",
     "test": "jest"
   },
   "typings": "index.d.ts",
@@ -34,6 +34,7 @@
     "webpack-cli": "^3.3.11"
   },
   "files": [
+    "lib",
     "index.d.ts",
     "dist"
   ]
