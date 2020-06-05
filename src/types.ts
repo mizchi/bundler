@@ -14,11 +14,18 @@ export type InternalOptions = {
   exposeToGlobal: string | null;
 };
 
-export type Specifier = {
-  localName: string;
-  importedName: string;
-  used: boolean;
-};
+export type Specifier =
+  | {
+      type: "identifier";
+      localName: string;
+      importedName: string;
+      used: boolean;
+    }
+  | {
+      type: "namespace";
+      localName: string;
+      used: boolean;
+    };
 
 export type Import = {
   filepath: string;

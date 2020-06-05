@@ -1,5 +1,5 @@
 import path from "path";
-import type { AnalyzedChunk } from "./types";
+import type { AnalyzedChunk, Analyzed } from "./types";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 import { analyzeModule, isPureAstNode } from "./analyzer";
@@ -12,22 +12,13 @@ export function treeshakeExports(
   chunks: AnalyzedChunk[],
   entry: string
 ): AnalyzedChunk[] {
-  const requiredExportsMap = new Map<string, string[]>();
-  chunks.forEach((m) => {
-    m.imports.forEach((imp) => {
-      const list = requiredExportsMap.get(imp.filepath) || [];
-      requiredExportsMap.set(imp.filepath, [
-        ...list,
-        ...imp.specifiers.map((s) => s.importedName),
-      ]);
-    });
-  });
-
+  const requiredExportsMap = buildRequiredExportsMap(chunks);
+  console.log("requiredExportsMap", requiredExportsMap);
   return chunks.map((mod) => {
     if (mod.filepath === entry) {
       return mod;
     }
-    const required = requiredExportsMap.get(mod.filepath) || [];
+    const required = requiredExportsMap.get(mod.filepath) ?? [];
     const cloned = t.cloneNode(mod.ast);
     traverse(cloned, {
       ExportNamedDeclaration(nodePath) {
@@ -59,6 +50,31 @@ export function treeshakeExports(
       ast: cloned,
     };
   });
+}
+
+function buildRequiredExportsMap(chunks: AnalyzedChunk[]) {
+  const requiredExportsMap = new Map<string, string[]>();
+  chunks.forEach((chunk) => {
+    chunk.imports.forEach((imp) => {
+      const list = requiredExportsMap.get(imp.filepath) || [];
+      let requiredExports: string[] = [...list];
+      imp.specifiers.forEach((s) => {
+        if (s.type === "identifier") {
+          requiredExports.push(s.importedName);
+        }
+        // Use all
+        if (s.type === "namespace") {
+          const target = chunks.find((c) => c.filepath === imp.filepath)!;
+          // console.log("chunk exports", chunk.exports);
+          requiredExports = target.exports.map((e) => e.exportedName);
+          // requiredExports = chunk.exports.map((m) => m.exportedName);
+        }
+      });
+
+      requiredExportsMap.set(imp.filepath, requiredExports);
+    });
+  });
+  return requiredExportsMap;
 }
 
 export function eliminateUnusedImports(

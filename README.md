@@ -72,11 +72,10 @@ WIP
 - [x] Bundle for worker
 - [x] `export { a }`
 - [x] `export { a } from "./b"`
-- [ ] `export * as x from "./c"`
-- [ ] `export { a as x} from "./xxx"`
-- [ ] Top Level ↑
-- [ ] File watcher with node
-- [ ] Support tsx
+- [x] `export { a as x} from "./b"`
+- [x] Entry: `export {...}`;
+- [x] Module: `export * as x from ...`
+- [ ] Entry: `export {...} from ...`
 
 ## Dynamic library features
 
@@ -85,6 +84,8 @@ WIP
 - [ ] name resolver on `preservedExternalImports` and `Worker`
 - [ ] Rewrite to pikacdn
 - [ ] Use with snowpack
+- [ ] File watcher with node
+- [ ] Support tsx
 
 ## Icebox
 

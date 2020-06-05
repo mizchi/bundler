@@ -72,6 +72,26 @@ export default \\"bar$\\" + foo;
 "
 `;
 
+exports[`entry: export {default as b} 1`] = `
+"// @mizchi/bundler generate
+const _$_exported = {};
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+const _$_modules = {
+  \\"/b.js\\": (_$_exports) => {
+    _$_exports.default = 1;
+    return _$_exports;
+  },
+};
+
+// -- entry --
+
+const { default: a } = _$_import(\\"/b.js\\");
+
+export { a as b };
+"
+`;
+
 exports[`entry: export {default as b} from "./m.js" 1`] = `
 "// @mizchi/bundler generate
 const _$_exported = {};
@@ -85,13 +105,37 @@ const _$_modules = {
     return _$_exports;
   },
   \\"/up.js\\": (_$_exports) => {
+    _$_exports.default = 1;
     return _$_exports;
   },
 };
 
 // -- entry --
 
-export { a as b } from \\"./m.js\\";
+export { a as b };
+"
+`;
+
+exports[`entry: import * as star 1`] = `
+"// @mizchi/bundler generate
+const _$_exported = {};
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+const _$_modules = {
+  \\"/up.js\\": (_$_exports) => {
+    _$_exports.up = 1;
+    _$_exports.down = 2;
+    return _$_exports;
+  },
+};
+
+// -- entry --
+
+const star = _$_import(\\"/up.js\\");
+
+const {} = _$_import(\\"/up.js\\");
+
+console.log(star);
 "
 `;
 
@@ -120,5 +164,33 @@ const _$_modules = {
 const { a: b } = _$_import(\\"/m.js\\");
 
 globalThis.__export_b = b;
+"
+`;
+
+exports[`optimized: export {x, y as z} from "./m.js" 1`] = `
+"// @mizchi/bundler generate
+const _$_exported = {};
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+const _$_modules = {
+  \\"/m.js\\": (_$_exports) => {
+    {
+      _$_exports.a = _$_import(\\"/up.js\\").up;
+      _$_exports.down = _$_import(\\"/up.js\\").down;
+    }
+    return _$_exports;
+  },
+  \\"/up.js\\": (_$_exports) => {
+    _$_exports.up = 1;
+    _$_exports.down = 2;
+    return _$_exports;
+  },
+};
+
+// -- entry --
+
+const { a: b } = _$_import(\\"/m.js\\");
+
+globalThis.__export_b2 = b;
 "
 `;

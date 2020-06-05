@@ -8,6 +8,7 @@ import type {
   WorkerSource,
   Ast,
   AstNode,
+  ModulesMap,
 } from "./types";
 
 import path from "path";
@@ -15,7 +16,7 @@ import traverse from "@babel/traverse";
 
 export function analyzeModule(ast: Ast, basepath: string): Analyzed {
   let imports: Import[] = [];
-  let exports: Export[] = [];
+  let exports_: Export[] = [];
   let dynamicImports: DynamicImport[] = [];
   let workerSources: WorkerSource[] = [];
 
@@ -59,6 +60,7 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
         const used = refs.includes(specifier.local.name);
         if (specifier.type === "ImportSpecifier") {
           specifiers.push({
+            type: "identifier",
             localName: specifier.local.name,
             importedName: specifier.imported.name,
             used,
@@ -66,8 +68,18 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
         }
         if (specifier.type === "ImportDefaultSpecifier") {
           specifiers.push({
-            localName: specifier.local.name,
+            type: "identifier",
             importedName: "default",
+            localName: specifier.local.name,
+            used,
+          });
+        }
+
+        if (specifier.type === "ImportNamespaceSpecifier") {
+          // TODO: push all
+          specifiers.push({
+            type: "namespace",
+            localName: specifier.local.name,
             used,
           });
         }
@@ -83,12 +95,12 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
         if (nodePath.node.declaration) {
           const decl = nodePath.node.declaration.declarations[0];
           const pure = isPureAstNode(decl.init);
-          exports.push({ exportedName: decl.id.name, pure });
+          exports_.push({ exportedName: decl.id.name, pure });
         } else {
           // Example: export { a }
           for (const specifier of nodePath.node.specifiers) {
             if (specifier.type == "ExportSpecifier") {
-              exports.push({
+              exports_.push({
                 exportedName: specifier.exported.name,
                 pure: true,
               });
@@ -96,23 +108,24 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
           }
 
           // export {a} from "./m.js";
+          // handle as import to used codes
           if (nodePath.node.source) {
-            // localName: string;
-            // importedName: string;
-            // used: boolean;
             const specifiers: Specifier[] = nodePath.node.specifiers.map(
               (specifier) => {
                 if (specifier.type == "ExportSpecifier") {
+                  // local and exported are inverted
                   return {
-                    localName: specifier.local.name,
-                    importedName: specifier.exported.name,
+                    type: "identifier",
+                    localName: specifier.exported.name,
+                    importedName: specifier.local.name,
                     used: true,
                   };
                 } else if (specifier.type === "ExportDefaultSpecifier") {
+                  // TODO: Check later
                   return {
-                    localName: "default",
-                    importedName: specifier.exported.name,
-                    // exportedName: specifier.exported.name,
+                    type: "identifier",
+                    localName: specifier.exported.name,
+                    importedName: "default",
                     used: true,
                   };
                 }
@@ -131,7 +144,7 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
   });
   return {
     imports,
-    exports,
+    exports: exports_,
     dynamicImports,
     workerSources,
     pure: isPureAst(ast),

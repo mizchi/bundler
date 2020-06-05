@@ -55,7 +55,24 @@ test(`export {x, y as z} from "./m.js"`, async () => {
   assert.equal(globalThis.__export_b, 1);
 });
 
-test(`entry: export {default as b} from "./m.js"`, async () => {
+test(`optimized: export {x, y as z} from "./m.js"`, async () => {
+  const bundler = new Bundler({
+    "/up.js": "export const up = 1; export const down = 2;",
+    "/m.js": `export {up as a, down} from "./up.js"`,
+    "/index.js": `
+    import { a as b } from "./m.js";
+    globalThis.__export_b2 = b;
+    `,
+  });
+  const built = await bundler.bundle("/index.js", { optimize: true });
+  // console.log(format(built, { parser: "babel" }));
+  expect(format(built, { parser: "babel" })).toMatchSnapshot();
+  eval(built);
+  // @ts-ignore
+  assert.equal(globalThis.__export_b2, 1);
+});
+
+test.skip(`entry: export {default as b} from "./m.js"`, async () => {
   const bundler = new Bundler({
     "/up.js": "export default 1;",
     "/m.js": `export {default as a} from "./up.js"`,
@@ -65,5 +82,28 @@ test(`entry: export {default as b} from "./m.js"`, async () => {
   });
   const built = await bundler.bundle("/index.js", {});
   console.log(format(built, { parser: "babel" }));
+  expect(format(built, { parser: "babel" })).toMatchSnapshot();
+});
+
+test(`entry: export {default as b}`, async () => {
+  const bundler = new Bundler({
+    "/b.js": `export default 1;`,
+    "/index.js": `
+    import a from "./b.js";
+    export { a as b };
+    `,
+  });
+  const built = await bundler.bundle("/index.js", {});
+  // console.log(format(built, { parser: "babel" }));
+  expect(format(built, { parser: "babel" })).toMatchSnapshot();
+});
+
+test(`entry: import * as star`, async () => {
+  const bundler = new Bundler({
+    "/up.js": "export const up = 1; export const down = 2;",
+    "/index.js": `import * as star from "./up.js"; console.log(star);`,
+  });
+  const built = await bundler.bundle("/index.js", { optimize: true });
+  // console.log(format(built, { parser: "babel" }));
   expect(format(built, { parser: "babel" })).toMatchSnapshot();
 });

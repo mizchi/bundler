@@ -90,13 +90,52 @@ export function transformToRunner(
         return;
       }
       const abspath = path.join(basepath, target);
+
+      // if (
+      //   nodePath.node.specifiers.length === 1 &&
+      //   nodePath.node.specifiers[0].type === "ImportNamespaceSpecifier"
+      // ) {
+      //   nodePath.replaceWith(
+      //     t.variableDeclaration("const", [
+      //       t.variableDeclarator(
+      //         t.objectPattern(
+      //           names.map(([imported, local]) => {
+      //             return t.objectProperty(
+      //               t.identifier(imported),
+      //               t.identifier(local)
+      //             );
+      //           })
+      //         ),
+      //         t.callExpression(t.identifier("_$_import"), [
+      //           t.stringLiteral(abspath),
+      //         ])
+      //       ),
+      //     ])
+
+      //   )
+      //   // return
+      // }
+
       const names: [string, string][] = [];
+
       nodePath.node.specifiers.forEach((n) => {
         if (n.type === "ImportDefaultSpecifier") {
           names.push(["default", n.local.name]);
         }
         if (n.type === "ImportSpecifier") {
           names.push([n.imported.name, n.local.name]);
+        }
+        if (n.type === "ImportNamespaceSpecifier") {
+          newImportStmts.push(
+            t.variableDeclaration("const", [
+              t.variableDeclarator(
+                t.identifier(n.local.name),
+                t.callExpression(t.identifier("_$_import"), [
+                  t.stringLiteral(abspath),
+                ])
+              ),
+            ])
+          );
         }
       });
 
@@ -136,6 +175,25 @@ export function transformToRunner(
     },
     ExportNamedDeclaration(nodePath) {
       if (preserveExport) {
+        if (nodePath.node.source) {
+          throw new Error(`Unimplmented Error.
+In entry module, @mischi/bundler can not handle "export {...} from ..." yet.
+Workaround
+
+[from]
+  export { x as a } from "./m.js"
+[to]
+  import { x } from "./m.js";
+  export { x as a }
+          `);
+          // Rewrite Plan
+          // const { default: default$, a } = _$_import("./x.js");
+          // export { default$ as default, a };
+
+          // delete source
+          nodePath.node.source = null;
+          // replace default to default$
+        }
         return;
       }
       // TODO: name mapping

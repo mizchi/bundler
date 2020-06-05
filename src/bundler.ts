@@ -150,7 +150,6 @@ export class Bundler {
       raw,
       filepath,
       ast,
-      exports,
     });
 
     // console.log("used", filepath, JSON.stringify(imports, null, 2));
