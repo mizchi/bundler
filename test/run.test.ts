@@ -22,6 +22,7 @@ globalThis.__out = foo + "-" + bar;
 test("bundle and eval", async () => {
   const bundler = new Bundler(files);
   const built = await bundler.bundle("/index.js", {});
+  // console.log(built);
   eval(built);
   // @ts-ignore
   assert.equal(globalThis.__out, "foo$default-bar$foo$default");

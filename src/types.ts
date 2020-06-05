@@ -1,4 +1,7 @@
-import type { Program } from "@babel/types";
+import type { File, Node } from "@babel/types";
+
+export type Ast = File;
+export type AstNode = Node;
 
 export type BundleOptions = {
   exposeToGlobal?: string | null;
@@ -38,7 +41,7 @@ export type WorkerImport = {
 
 export type AnalyzedChunk = Analyzed & {
   raw: string;
-  ast: Program;
+  ast: Ast;
   filepath: string;
 };
 

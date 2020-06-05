@@ -1,5 +1,4 @@
-import type { AnalyzedChunk } from "./types";
-import type { Program } from "@babel/types";
+import type { AnalyzedChunk, Ast } from "./types";
 
 import path from "path";
 import { transformToEntryRunner, transformToModuleRunner } from "./transformer";
@@ -47,7 +46,7 @@ export function render(
   return runnerTemplate(code, additianalCode, entryCode);
 }
 
-export function generate(ast: Program): string {
+export function generate(ast: Ast): string {
   const gen = generateAsBabel(ast);
   return gen.code;
 }

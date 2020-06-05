@@ -1,12 +1,11 @@
-import type { Program } from "@babel/types";
-
+import { Ast } from "./types";
 import path from "path";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 import { filepathToFlatSymbol } from "./helpers";
 
 export function transformToModuleRunner(
-  ast: Program,
+  ast: Ast,
   basepath: string,
   {
     transformDynamicImport,
@@ -22,7 +21,7 @@ export function transformToModuleRunner(
 }
 
 export function transformToEntryRunner(
-  ast: Program,
+  ast: Ast,
   basepath: string,
   {
     transformDynamicImport,
@@ -38,7 +37,7 @@ export function transformToEntryRunner(
 }
 
 export function transformToRunner(
-  ast: Program,
+  ast: Ast,
   basepath: string,
   {
     preserveExport,
@@ -51,7 +50,7 @@ export function transformToRunner(
     transformDynamicImport: boolean;
     publicPath: string;
   }
-) {
+): Ast {
   const cloned = t.cloneNode(ast);
   const newImportStmts: t.VariableDeclaration[] = [];
   traverse(cloned, {
@@ -143,5 +142,11 @@ export function transformToRunner(
       nodePath.replaceWith(newNode as any);
     },
   });
-  return { ...cloned, body: [...newImportStmts, ...cloned.body] };
+  return {
+    ...cloned,
+    program: {
+      ...ast.program,
+      body: [...newImportStmts, ...cloned.program.body],
+    },
+  };
 }

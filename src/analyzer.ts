@@ -1,4 +1,4 @@
-import type { Program, Node } from "@babel/types";
+import * as t from "@babel/types";
 import type {
   Export,
   Import,
@@ -6,21 +6,21 @@ import type {
   DynamicImport,
   Analyzed,
   WorkerImport,
+  Ast,
+  AstNode,
 } from "./types";
 
 import path from "path";
 import traverse from "@babel/traverse";
 
-export function analyzeModule(ast: Program, basepath: string): Analyzed {
+export function analyzeModule(ast: Ast, basepath: string): Analyzed {
   let imports: Import[] = [];
   let exports: Export[] = [];
   let dynamicImports: DynamicImport[] = [];
   let workerImports: WorkerImport[] = [];
 
-  const refenrencedIdentifiers = getReferencedIdentifiers({
-    ...ast,
-    body: ast.body.filter((x) => x.type !== "ImportDeclaration"),
-  });
+  const refs = getGlobalsWithoutImports(ast);
+  // console.log("globals", refs);
 
   traverse(ast, {
     // detect dynamic import
@@ -42,7 +42,7 @@ export function analyzeModule(ast: Program, basepath: string): Analyzed {
       const specifiers: Specifier[] = [];
 
       for (const specifier of nodePath.node.specifiers) {
-        const used = refenrencedIdentifiers.includes(specifier.local.name);
+        const used = refs.includes(specifier.local.name);
         if (specifier.type === "ImportSpecifier") {
           specifiers.push({
             localName: specifier.local.name,
@@ -81,30 +81,19 @@ export function analyzeModule(ast: Program, basepath: string): Analyzed {
   };
 }
 
-function getReferencedIdentifiers(ast: Program) {
-  const ids: string[] = [];
-  traverse(ast, {
-    Identifier(nodePath) {
-      // console.log(nodePath.node.name, "in", nodePath.parent.type);
-      if (
-        nodePath.parent.type === "ObjectProperty" &&
-        nodePath.node !== nodePath.parent.value
-      ) {
-        // console.log(nodePath.node.name, "is label of", nodePath.parent.key);
-        return;
-      }
-
-      if (
-        nodePath.parent.type === "MemberExpression" &&
-        nodePath.node !== nodePath.parent.object
-      ) {
-        // console.log(nodePath.node.name, "is property of", nodePath.parent.object);
-        return;
-      }
-      if (!ids.includes(nodePath.node.name)) {
-        ids.push(nodePath.node.name);
-      }
-      // console.log(nodePath.node.name);
+export function getGlobalsWithoutImports(ast: Ast) {
+  let ids: string[] = [];
+  const astWithoutImports = {
+    ...ast,
+    program: {
+      ...ast.program,
+      body: ast.program.body.filter((x) => x.type !== "ImportDeclaration"),
+    },
+  };
+  traverse(astWithoutImports, {
+    Program(path) {
+      // @ts-ignore
+      ids = Object.keys(path.scope.globals);
     },
   });
   return ids;
@@ -137,7 +126,7 @@ function isPureNodeType(type: string): boolean {
   return WHITELIST_NODE_TYPE.includes(type);
 }
 
-export function isPureNode(node: Node) {
+export function isPureNode(node: AstNode) {
   switch (node.type) {
     case "VariableDeclaration": {
       for (const declaration of node.declarations) {
@@ -208,8 +197,8 @@ export function isPureNode(node: Node) {
   }
 }
 
-export function isPureProgram(ast: Program): boolean {
-  for (const stmt of ast.body) {
+export function isPureProgram(parsed: Ast): boolean {
+  for (const stmt of parsed.program.body) {
     if (!isPureNode(stmt)) {
       return false;
     }

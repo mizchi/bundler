@@ -146,6 +146,9 @@ export class Bundler {
     for (const di of analyzed.dynamicImports) {
       await this.addModule(di.filepath);
     }
+    for (const w of analyzed.workerImports) {
+      await this.addModule(w.filepath);
+    }
   }
 }
 
