@@ -32,6 +32,7 @@ export class Bundler {
       preserveExternalImport,
     };
     await this.addModule(entry);
+    // console.log(this.modulesMap);
     const ctx = new BuildContext(entry, this.modulesMap);
     return await ctx.emit(internalOptions);
   }
@@ -59,7 +60,6 @@ export class Bundler {
     }
 
     const basepath = path.dirname(filepath);
-
     const raw = await readFile(this.fs, filepath);
     const ast = parse(raw, filepath);
 
@@ -150,14 +150,6 @@ class BuildContext {
     const basepath = path.dirname(mod.filepath);
     const analyzed = analyzeScope(shaked, basepath);
 
-    this.ctxModulesMap.push({
-      ...mod,
-      ...analyzed,
-      importedBy: [],
-      filepath: mod.filepath,
-      treeshaked: treeshake(mod.ast, mod.filepath, [], this.modulesMap),
-    });
-
     for (const imp of analyzed.imports) {
       if (this.ctxModulesMap.find((x) => x.filepath === imp.filepath)) {
         continue;
@@ -165,6 +157,13 @@ class BuildContext {
       const child = this.modulesMap.get(imp.filepath)!;
       this.bundleRecursively(child);
     }
+    this.ctxModulesMap.push({
+      ...mod,
+      ...analyzed,
+      importedBy: [],
+      filepath: mod.filepath,
+      treeshaked: treeshake(mod.ast, mod.filepath, [], this.modulesMap),
+    });
   }
 }
 
@@ -175,9 +174,7 @@ const runnerTemplate = (
 ) => `// minibundle generate
 const _$_exported = {};
 const _$_import = (id) => _$_exported[id] || _$_modules[id](_$_exported[id] = {});
-
 const _$_modules = ${moduleCodes};
-
 ${additianalCode};
 
 // -- entry --

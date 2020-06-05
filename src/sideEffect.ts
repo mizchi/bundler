@@ -65,21 +65,26 @@ function isPureNode(node: Node) {
     case "ArrayExpression": {
       for (const element of node.elements) {
         // TODO: [[]]
-        if (element && !isPureNodeType(element.type)) {
+        if (element && !isPureNode(element)) {
           return false;
         }
       }
       return true;
     }
     case "ExpressionStatement": {
-      if (!isPureNodeType(node.expression.type)) {
+      if (!isPureNode(node.expression)) {
         return false;
       }
       return true;
     }
-    case "ExportNamedDeclaration":
+    case "ExportNamedDeclaration": {
+      if (!isPureNode(node.declaration)) {
+        return false;
+      }
+      return true;
+    }
     case "ExportDefaultDeclaration": {
-      if (!isPureNodeType(node.declaration.type)) {
+      if (!isPureNode(node.declaration)) {
         return false;
       }
       return true;

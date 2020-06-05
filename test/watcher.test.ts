@@ -38,6 +38,6 @@ test("watcher 2", async () => {
     `import bar from "./bar.js"\nconsole.log(bar)`
   );
   const out = await bundler.bundle("/index.js");
-  console.log(format(out, { parser: "babel" }));
+  // console.log(format(out, { parser: "babel" }));
   expect(format(out, { parser: "babel" })).toMatchSnapshot();
 });

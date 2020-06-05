@@ -70,11 +70,11 @@ assert.ok(pure);
 
     "/index.js": `
     import a from "./a.js";
-    import b from "./b.js";
     import {c} from "./c.js";
 
     console.log(a, c);
-    import a2 from "./a.js";
+    import b from "./b.js";
+
     `,
   });
   const code = await bundler.bundle("/index.js");

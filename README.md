@@ -11,11 +11,12 @@ Readable output bundler
 - [ ] Tree shaking
   - [x] detect side effects
   - [x] Strip unused import
-  - [ ] Remove modules code by treeshake
+  - [x] Remove modules code by treeshake
   - [ ] Remove unused exports
 - [ ] Inline dynamic import
 - [ ] Dynamic import chunks
 - [ ] Support name resolver
+- [ ] Worker
 - [ ] `export { a } from "./b"`
 - [ ] `export * as x from "./c"`
 - [ ] `export { a }`
