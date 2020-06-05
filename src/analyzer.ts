@@ -1,21 +1,21 @@
 import type { Program, Node } from "@babel/types";
-import type { Export, Import, Specifier, DynamicImport } from "./types";
+import type {
+  Export,
+  Import,
+  Specifier,
+  DynamicImport,
+  Analyzed,
+  WorkerImport,
+} from "./types";
 
 import path from "path";
 import traverse from "@babel/traverse";
 
-export function analyzeModule(
-  ast: Program,
-  basepath: string
-): {
-  exports: Export[];
-  imports: Import[];
-  dynamicImports: DynamicImport[];
-  pure: boolean;
-} {
+export function analyzeModule(ast: Program, basepath: string): Analyzed {
   let imports: Import[] = [];
   let exports: Export[] = [];
   let dynamicImports: DynamicImport[] = [];
+  let workerImports: WorkerImport[] = [];
 
   const refenrencedIdentifiers = getReferencedIdentifiers({
     ...ast,
@@ -76,6 +76,7 @@ export function analyzeModule(
     imports,
     exports,
     dynamicImports,
+    workerImports,
     pure: isPureProgram(ast),
   };
 }

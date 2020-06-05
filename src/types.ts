@@ -31,14 +31,23 @@ export type Export = {
   pure: boolean;
 };
 
-export type AnalyzedChunk = {
+export type WorkerImport = {
+  filepath: string;
+  module: boolean;
+};
+
+export type AnalyzedChunk = Analyzed & {
   raw: string;
   ast: Program;
   filepath: string;
-  imports: Import[];
-  dynamicImports: DynamicImport[];
-  exports: Export[];
-  pure: boolean;
 };
 
 export type ModulesMap = Map<string, AnalyzedChunk>;
+
+export type Analyzed = {
+  exports: Export[];
+  imports: Import[];
+  dynamicImports: DynamicImport[];
+  workerImports: WorkerImport[];
+  pure: boolean;
+};

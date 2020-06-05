@@ -130,26 +130,20 @@ export class Bundler {
     const raw = await readFile(this.fs, filepath);
     const ast = parse(raw, filepath);
 
-    const { imports, exports, dynamicImports, pure } = analyzeModule(
-      ast,
-      basepath
-    );
-
+    const analyzed = analyzeModule(ast, basepath);
     this.modulesMap.set(filepath, {
+      ...analyzed,
       raw,
       filepath,
-      dynamicImports,
       ast,
-      imports,
       exports,
-      pure,
     });
 
     // console.log("used", filepath, JSON.stringify(imports, null, 2));
-    for (const i of imports) {
+    for (const i of analyzed.imports) {
       await this.addModule(i.filepath);
     }
-    for (const di of dynamicImports) {
+    for (const di of analyzed.dynamicImports) {
       await this.addModule(di.filepath);
     }
   }
