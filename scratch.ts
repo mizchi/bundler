@@ -66,11 +66,15 @@ assert.ok(pure);
   const bundler = new Bundler({
     "/a.js": "console.log(1)",
     "/b.js": "export default 1;",
+    "/c.js": "export const c = 1; export const dead = 2;",
+
     "/index.js": `
     import a from "./a.js";
     import b from "./b.js";
+    import {c} from "./c.js";
+
     console.log(a, c);
-    import c from "./a.js";
+    import a2 from "./a.js";
     `,
   });
   const code = await bundler.bundle("/index.js");

@@ -33,3 +33,5 @@ export type ParsedModule = {
   exports: Export[];
   hasSideEffect: boolean;
 };
+
+export type ModulesMap = Map<string, ParsedModule>;

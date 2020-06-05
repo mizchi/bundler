@@ -3,6 +3,9 @@
 exports[`bundle 1`] = `
 "// minibundle generate
 const _$_exported = {};
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+
 const _$_modules = {
   \\"/foo.js\\": (_$_exports) => {
     console.log(\\"eval foo once\\");
@@ -19,13 +22,9 @@ const _$_modules = {
     return _$_exports;
   },
 };
-const _$_import = (id) =>
-  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-// evaluate by order or sort?
-_$_import(\\"/foo.js\\");
-_$_import(\\"/bar.js\\");
 
-// -- runner --
+// -- entry --
+
 const { default: foo, a: a, b: c } = _$_import(\\"/foo.js\\");
 
 const { default: bar } = _$_import(\\"/bar.js\\");
@@ -39,42 +38,26 @@ console.log(foo, bar);
 exports[`bundle 2`] = `
 "// minibundle generate
 const _$_exported = {};
-const _$_modules = {
-  \\"/foo.js\\": (_$_exports) => {
-    console.log(\\"eval foo once\\");
-    _$_exports.default = \\"foo$default\\";
-    _$_exports.b = \\"b\\";
-    _$_exports.a = \\"a\\";
-    return _$_exports;
-  },
-  \\"/bar.js\\": (_$_exports) => {
-    const { default: foo } = _$_import(\\"/foo.js\\");
-
-    console.log(\\"eval bar once\\");
-    _$_exports.default = \\"bar$\\" + foo;
-    return _$_exports;
-  },
-};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-// evaluate by order or sort?
-_$_import(\\"/foo.js\\");
-_$_import(\\"/bar.js\\");
 
-// -- runner --
-const { default: foo, a: a, b: c } = _$_import(\\"/foo.js\\");
+const _$_modules = {};
 
-const { default: bar } = _$_import(\\"/bar.js\\");
+// -- entry --
 
-export const x: number = c;
-export default 1;
-console.log(foo, bar);
+console.log(\\"eval foo once\\");
+export default \\"foo$default\\";
+export const b = \\"b\\";
+export const a = \\"a\\";
 "
 `;
 
 exports[`bundle 3`] = `
 "// minibundle generate
 const _$_exported = {};
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+
 const _$_modules = {
   \\"/foo.js\\": (_$_exports) => {
     console.log(\\"eval foo once\\");
@@ -83,27 +66,13 @@ const _$_modules = {
     _$_exports.a = \\"a\\";
     return _$_exports;
   },
-  \\"/bar.js\\": (_$_exports) => {
-    const { default: foo } = _$_import(\\"/foo.js\\");
-
-    console.log(\\"eval bar once\\");
-    _$_exports.default = \\"bar$\\" + foo;
-    return _$_exports;
-  },
 };
-const _$_import = (id) =>
-  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-// evaluate by order or sort?
-_$_import(\\"/foo.js\\");
-_$_import(\\"/bar.js\\");
 
-// -- runner --
-const { default: foo, a: a, b: c } = _$_import(\\"/foo.js\\");
+// -- entry --
 
-const { default: bar } = _$_import(\\"/bar.js\\");
+const { default: foo } = _$_import(\\"/foo.js\\");
 
-export const x: number = c;
-export default 1;
-console.log(foo, bar);
+console.log(\\"eval bar once\\");
+export default \\"bar$\\" + foo;
 "
 `;

@@ -3,6 +3,9 @@
 exports[`watcher 1`] = `
 "// minibundle generate
 const _$_exported = {};
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+
 const _$_modules = {
   \\"/foo.js\\": (_$_exports) => {
     _$_exports.default = \\"foo\\";
@@ -13,13 +16,9 @@ const _$_modules = {
     return _$_exports;
   },
 };
-const _$_import = (id) =>
-  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-// evaluate by order or sort?
-_$_import(\\"/foo.js\\");
-_$_import(\\"/bar.js\\");
 
-// -- runner --
+// -- entry --
+
 const { default: foo } = _$_import(\\"/foo.js\\");
 
 const { default: bar } = _$_import(\\"/bar.js\\");
@@ -31,11 +30,13 @@ console.log(foo, bar);
 exports[`watcher 2`] = `
 "// minibundle generate
 const _$_exported = {};
-const _$_modules = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-// evaluate by order or sort?
-// -- runner --
+
+const _$_modules = {};
+
+// -- entry --
+
 console.log(1);
 "
 `;
@@ -43,6 +44,9 @@ console.log(1);
 exports[`watcher 2 1`] = `
 "// minibundle generate
 const _$_exported = {};
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+
 const _$_modules = {
   \\"/foo.js\\": (_$_exports) => {
     _$_exports.default = \\"foo\\";
@@ -53,13 +57,9 @@ const _$_modules = {
     return _$_exports;
   },
 };
-const _$_import = (id) =>
-  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-// evaluate by order or sort?
-_$_import(\\"/foo.js\\");
-_$_import(\\"/bar.js\\");
 
-// -- runner --
+// -- entry --
+
 const { default: foo } = _$_import(\\"/foo.js\\");
 
 const { default: bar } = _$_import(\\"/bar.js\\");
@@ -71,18 +71,18 @@ console.log(foo, bar);
 exports[`watcher 2 2`] = `
 "// minibundle generate
 const _$_exported = {};
+const _$_import = (id) =>
+  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
+
 const _$_modules = {
   \\"/bar.js\\": (_$_exports) => {
     _$_exports.default = \\"bar\\";
     return _$_exports;
   },
 };
-const _$_import = (id) =>
-  _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-// evaluate by order or sort?
-_$_import(\\"/bar.js\\");
 
-// -- runner --
+// -- entry --
+
 const { default: bar } = _$_import(\\"/bar.js\\");
 
 console.log(bar);
