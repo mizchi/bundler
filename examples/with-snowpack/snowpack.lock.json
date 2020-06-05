@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "preact": "https://cdn.pika.dev/pin/preact@v10.4.4-TMS9ZInOJGpdAXfW4AwM/preact.js"
+  }
+}

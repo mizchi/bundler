@@ -1,7 +1,7 @@
 import assert from "assert";
 
 import { parse } from "../src/parser";
-import { isPureProgram } from "../src/analyzer";
+import { isPureAst } from "../src/analyzer";
 
 const pureCode = `
 import "./foo.js";
@@ -30,7 +30,7 @@ const v15 = {...{}};
 
 test("ok", () => {
   const ast = parse(pureCode, "/x.js");
-  const pure = isPureProgram(ast);
+  const pure = isPureAst(ast);
 
   assert.ok(pure);
 });
@@ -41,6 +41,6 @@ export const b = 2;
 `;
 test("only export", () => {
   const ast = parse(onlyExport, "/x.js");
-  const pure = isPureProgram(ast);
+  const pure = isPureAst(ast);
   assert.ok(pure);
 });

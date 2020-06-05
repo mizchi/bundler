@@ -49,6 +49,14 @@ export const index = 1;
 
 Entry exports are left.
 
+## Example: chunks
+
+WIP
+
+## Example: Worker
+
+WIP
+
 ## TODO
 
 - [x] Delete build cache and rebuild
@@ -61,13 +69,28 @@ Entry exports are left.
   - [x] Remove unused exports
 - [x] Dynamic import chunks: `bundler.bundleChunks(entry)`
 - [x] publicPath
-- [ ] Support import-map
-- [ ] Support name resolver on `preservedExternalExports`
-- [ ] Inline Worker
-- [ ] `export { a } from "./b"`
+- [x] Bundle for worker
+- [x] `export { a }`
+- [x] `export { a } from "./b"`
 - [ ] `export * as x from "./c"`
-- [ ] `export { a }`
 - [ ] `export { a as x} from "./xxx"`
+- [ ] Top Level ↑
+- [ ] File watcher with node
+- [ ] Support tsx
+
+## Dynamic library features
+
+- [ ] Skip import and export those are not relative
+- [ ] Support import-map
+- [ ] name resolver on `preservedExternalImports` and `Worker`
+- [ ] Rewrite to pikacdn
+- [ ] Use with snowpack
+
+## Icebox
+
+- [ ] Inline Worker
+- [ ] minilink integration
+- [ ] compile to single html
 
 ## LICENSE
 

@@ -4,7 +4,6 @@ module.exports = {
     bundler: path.join(__dirname, "src/index"),
   },
   output: {
-    // libraryName: "mizchi$bundle",
     libraryTarget: "umd",
     filename: "[name].js",
   },

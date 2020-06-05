@@ -1,0 +1,15 @@
+{
+  "name": "with-snowpack",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "webDependencies": {
+    "preact": "^10.4.4"
+  },
+  "devDependencies": {
+    "graceful-fs": "^4.2.4",
+    "prettier": "^2.0.5",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.5"
+  }
+}

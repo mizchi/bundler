@@ -36,6 +36,7 @@ export function transformToEntryRunner(
   });
 }
 
+const transformWorkerSource = true;
 export function transformToRunner(
   ast: Ast,
   basepath: string,
@@ -54,6 +55,20 @@ export function transformToRunner(
   const cloned = t.cloneNode(ast);
   const newImportStmts: t.VariableDeclaration[] = [];
   traverse(cloned, {
+    NewExpression(nodePath) {
+      if (
+        nodePath.node.callee.type === "Identifier" &&
+        nodePath.node.callee.name === "Worker"
+      ) {
+        if (nodePath.node.arguments[0].type === "StringLiteral") {
+          const abspath = path.join(basepath, nodePath.node.arguments[0].value);
+          nodePath.node.arguments[0].value = filepathToFlatSymbol(
+            abspath,
+            publicPath
+          );
+        }
+      }
+    },
     CallExpression(nodePath) {
       if (!transformDynamicImport) {
         return;
@@ -62,8 +77,8 @@ export function transformToRunner(
       if (nodePath.node.callee.type == "Import") {
         const arg = nodePath.node.arguments[0];
         if (arg.type === "StringLiteral") {
-          const absPath = path.join(basepath, arg.value);
-          arg.value = filepathToFlatSymbol(absPath, publicPath);
+          const abspath = path.join(basepath, arg.value);
+          arg.value = filepathToFlatSymbol(abspath, publicPath);
         }
       }
     },
@@ -74,7 +89,7 @@ export function transformToRunner(
         // Example: import "https://cdn.pika.dev/preact"
         return;
       }
-      const absPath = path.join(basepath, target);
+      const abspath = path.join(basepath, target);
       const names: [string, string][] = [];
       nodePath.node.specifiers.forEach((n) => {
         if (n.type === "ImportDefaultSpecifier") {
@@ -97,7 +112,7 @@ export function transformToRunner(
               })
             ),
             t.callExpression(t.identifier("_$_import"), [
-              t.stringLiteral(absPath),
+              t.stringLiteral(abspath),
             ])
           ),
         ])
@@ -125,21 +140,62 @@ export function transformToRunner(
       }
       // TODO: name mapping
       // TODO: Export multiple name
-      const decl = nodePath.node.declaration.declarations[0];
-      const name = decl.id.name;
-      const right = decl.init;
-      const newNode = t.expressionStatement(
-        t.assignmentExpression(
-          "=",
-          t.memberExpression(
-            t.identifier("_$_exports"),
-            t.identifier(name)
-            // true
-          ),
-          right
-        )
-      );
-      nodePath.replaceWith(newNode as any);
+      if (nodePath.node.declaration) {
+        const decl = nodePath.node.declaration.declarations[0];
+        const name = decl.id.name;
+        const right = decl.init;
+        const newNode = t.expressionStatement(
+          t.assignmentExpression(
+            "=",
+            t.memberExpression(
+              t.identifier("_$_exports"),
+              t.identifier(name)
+              // true
+            ),
+            right
+          )
+        );
+        nodePath.replaceWith(newNode);
+      } else {
+        // export { a as b }
+        const exportNames: Array<{ exported: string; imported: string }> = [];
+        for (const specifier of nodePath.node.specifiers) {
+          if (specifier.type == "ExportSpecifier") {
+            exportNames.push({
+              exported: specifier.exported.name,
+              imported: specifier.local.name,
+            });
+          }
+        }
+        const sourceMode = !!nodePath.node.source;
+
+        nodePath.replaceWith(
+          t.blockStatement(
+            exportNames.map((exp) => {
+              return t.expressionStatement(
+                t.assignmentExpression(
+                  "=",
+                  t.memberExpression(
+                    t.identifier("_$_exports"),
+                    t.identifier(exp.exported)
+                    // true
+                  ),
+                  nodePath.node.source
+                    ? t.memberExpression(
+                        t.callExpression(t.identifier("_$_import"), [
+                          t.stringLiteral(
+                            path.join(basepath, nodePath.node.source.value)
+                          ),
+                        ]),
+                        t.identifier(exp.imported)
+                      )
+                    : t.identifier(exp.imported)
+                )
+              );
+            })
+          )
+        );
+      }
     },
   });
   return {

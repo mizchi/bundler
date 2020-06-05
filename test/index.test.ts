@@ -1,5 +1,6 @@
 import { Bundler } from "./../src/index";
 import { format } from "prettier";
+import assert from "assert";
 
 // runtime
 const files = {
@@ -35,4 +36,34 @@ test("bundle", async () => {
 
   const built$bar = await bundler.bundle("/bar.js", {});
   expect(format(built$bar, { parser: "babel" })).toMatchSnapshot();
+});
+
+test(`export {x, y as z} from "./m.js"`, async () => {
+  const bundler = new Bundler({
+    "/up.js": "export const up = 1; export const down = 2;",
+    "/m.js": `export {up as a, down} from "./up.js"`,
+    "/index.js": `
+    import { a as b } from "./m.js";
+    globalThis.__export_b = b;
+    `,
+  });
+  const built = await bundler.bundle("/index.js", { optimize: false });
+  // console.log(format(built, { parser: "babel" }));
+  expect(format(built, { parser: "babel" })).toMatchSnapshot();
+  eval(built);
+  // @ts-ignore
+  assert.equal(globalThis.__export_b, 1);
+});
+
+test(`entry: export {default as b} from "./m.js"`, async () => {
+  const bundler = new Bundler({
+    "/up.js": "export default 1;",
+    "/m.js": `export {default as a} from "./up.js"`,
+    "/index.js": `
+    export { a as b } from "./m.js";
+    `,
+  });
+  const built = await bundler.bundle("/index.js", {});
+  console.log(format(built, { parser: "babel" }));
+  expect(format(built, { parser: "babel" })).toMatchSnapshot();
 });

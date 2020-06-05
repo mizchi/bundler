@@ -100,6 +100,20 @@ export class Bundler {
       );
     });
     // console.log("bundle", dynamicImports);
+    const workerSources = optimizedChunks.map((c) => c.workerSources).flat();
+    workerSources.forEach((i) => {
+      this.bundleChunks(
+        i.filepath,
+        {
+          exposeToGlobal: null,
+          optimize: _optimize,
+          root: false,
+          publicPath,
+        },
+        builtChunks
+      );
+    });
+
     return builtChunks;
   }
 
@@ -146,7 +160,7 @@ export class Bundler {
     for (const di of analyzed.dynamicImports) {
       await this.addModule(di.filepath);
     }
-    for (const w of analyzed.workerImports) {
+    for (const w of analyzed.workerSources) {
       await this.addModule(w.filepath);
     }
   }

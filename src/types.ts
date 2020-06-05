@@ -34,7 +34,7 @@ export type Export = {
   pure: boolean;
 };
 
-export type WorkerImport = {
+export type WorkerSource = {
   filepath: string;
   module: boolean;
 };
@@ -51,6 +51,6 @@ export type Analyzed = {
   exports: Export[];
   imports: Import[];
   dynamicImports: DynamicImport[];
-  workerImports: WorkerImport[];
+  workerSources: WorkerSource[];
   pure: boolean;
 };

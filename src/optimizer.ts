@@ -2,7 +2,7 @@ import path from "path";
 import type { AnalyzedChunk } from "./types";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
-import { analyzeModule, isPureNode } from "./analyzer";
+import { analyzeModule, isPureAstNode } from "./analyzer";
 
 export function optimize(chunks: AnalyzedChunk[], entry: string) {
   return eliminateUnusedImports(treeshakeExports(chunks, entry));
@@ -31,21 +31,23 @@ export function treeshakeExports(
     const cloned = t.cloneNode(mod.ast);
     traverse(cloned, {
       ExportNamedDeclaration(nodePath) {
-        const decl: t.VariableDeclarator =
-          nodePath.node.declaration?.declarations[0];
-        if (decl.init && decl.id.type === "Identifier") {
-          const name = decl.id.name;
-          // console.log("identifier", name);
+        if (nodePath.node.declaration) {
+          const decl: t.VariableDeclarator =
+            nodePath.node.declaration?.declarations[0];
+          if (decl.init && decl.id.type === "Identifier") {
+            const name = decl.id.name;
+            // console.log("identifier", name);
 
-          if (!required.includes(name) && isPureNode(decl.init)) {
-            nodePath.replaceWith(t.emptyStatement());
+            if (!required.includes(name) && isPureAstNode(decl.init)) {
+              nodePath.replaceWith(t.emptyStatement());
+            }
           }
         }
       },
       ExportDefaultDeclaration(nodePath) {
         if (
           !required.includes("default") &&
-          isPureNode(nodePath.node.declaration)
+          isPureAstNode(nodePath.node.declaration)
         ) {
           nodePath.replaceWith(t.emptyStatement());
         }

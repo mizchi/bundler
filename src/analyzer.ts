@@ -5,7 +5,7 @@ import type {
   Specifier,
   DynamicImport,
   Analyzed,
-  WorkerImport,
+  WorkerSource,
   Ast,
   AstNode,
 } from "./types";
@@ -17,21 +17,35 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
   let imports: Import[] = [];
   let exports: Export[] = [];
   let dynamicImports: DynamicImport[] = [];
-  let workerImports: WorkerImport[] = [];
+  let workerSources: WorkerSource[] = [];
 
   const refs = getGlobalsWithoutImports(ast);
   // console.log("globals", refs);
 
   traverse(ast, {
+    NewExpression(nodePath) {
+      if (
+        nodePath.node.callee.type === "Identifier" &&
+        nodePath.node.callee.name === "Worker"
+      ) {
+        if (nodePath.node.arguments[0].type === "StringLiteral") {
+          const source = nodePath.node.arguments[0].value;
+          workerSources.push({
+            filepath: path.join(basepath, source),
+            module: true,
+          });
+        }
+      }
+    },
     // detect dynamic import
     CallExpression(nodePath) {
       // console.log("CallExpression", nodePath.node);
       if (nodePath.node.callee.type == "Import") {
         const arg = nodePath.node.arguments[0];
         if (arg.type === "StringLiteral") {
-          const absPath = path.join(basepath, arg.value);
+          const abspath = path.join(basepath, arg.value);
           dynamicImports.push({
-            filepath: absPath,
+            filepath: abspath,
           });
         }
       }
@@ -66,9 +80,52 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
     },
     ExportDeclaration(nodePath) {
       if (nodePath.node.type === "ExportNamedDeclaration") {
-        const decl = nodePath.node.declaration.declarations[0];
-        const pure = isPureNode(decl.init);
-        exports.push({ exportedName: decl.id.name, pure });
+        if (nodePath.node.declaration) {
+          const decl = nodePath.node.declaration.declarations[0];
+          const pure = isPureAstNode(decl.init);
+          exports.push({ exportedName: decl.id.name, pure });
+        } else {
+          // Example: export { a }
+          for (const specifier of nodePath.node.specifiers) {
+            if (specifier.type == "ExportSpecifier") {
+              exports.push({
+                exportedName: specifier.exported.name,
+                pure: true,
+              });
+            }
+          }
+
+          // export {a} from "./m.js";
+          if (nodePath.node.source) {
+            // localName: string;
+            // importedName: string;
+            // used: boolean;
+            const specifiers: Specifier[] = nodePath.node.specifiers.map(
+              (specifier) => {
+                if (specifier.type == "ExportSpecifier") {
+                  return {
+                    localName: specifier.local.name,
+                    importedName: specifier.exported.name,
+                    used: true,
+                  };
+                } else if (specifier.type === "ExportDefaultSpecifier") {
+                  return {
+                    localName: "default",
+                    importedName: specifier.exported.name,
+                    // exportedName: specifier.exported.name,
+                    used: true,
+                  };
+                }
+                throw new Error(`ExportNamespaces are deprecated`);
+              }
+            );
+
+            imports.push({
+              filepath: path.join(basepath, nodePath.node.source.value),
+              specifiers: specifiers,
+            });
+          }
+        }
       }
     },
   });
@@ -76,8 +133,8 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
     imports,
     exports,
     dynamicImports,
-    workerImports,
-    pure: isPureProgram(ast),
+    workerSources,
+    pure: isPureAst(ast),
   };
 }
 
@@ -122,16 +179,25 @@ const WHITELIST_NODE_TYPE: string[] = [
   "Literal",
 ];
 
-function isPureNodeType(type: string): boolean {
-  return WHITELIST_NODE_TYPE.includes(type);
+export function isPureAst(parsed: Ast): boolean {
+  for (const stmt of parsed.program.body) {
+    if (!isPureAstNode(stmt)) {
+      return false;
+    }
+  }
+  return true;
 }
 
-export function isPureNode(node: AstNode) {
+export function isPureAstNode(node: AstNode) {
+  // TODO: why?
+  if (node == null) {
+    return true;
+  }
   switch (node.type) {
     case "VariableDeclaration": {
       for (const declaration of node.declarations) {
         if (declaration.init) {
-          if (!isPureNode(declaration.init)) {
+          if (!isPureAstNode(declaration.init)) {
             return false;
           }
         }
@@ -142,18 +208,18 @@ export function isPureNode(node: AstNode) {
     case "ObjectExpression": {
       for (const prop of node.properties) {
         if (prop.type === "SpreadElement") {
-          if (!isPureNode(prop.argument)) {
+          if (!isPureAstNode(prop.argument)) {
             return false;
           }
           continue;
         }
         if (prop.computed) {
-          if (!isPureNode(prop.key)) {
+          if (!isPureAstNode(prop.key)) {
             return false;
           }
         }
         if (prop.type === "ObjectProperty") {
-          if (!isPureNode(prop.value)) {
+          if (!isPureAstNode(prop.value)) {
             return false;
           }
         }
@@ -164,32 +230,32 @@ export function isPureNode(node: AstNode) {
     case "ArrayExpression": {
       for (const element of node.elements) {
         // TODO: [[]]
-        if (element && !isPureNode(element)) {
+        if (element && !isPureAstNode(element)) {
           return false;
         }
       }
       return true;
     }
     case "ExpressionStatement": {
-      if (!isPureNode(node.expression)) {
+      if (!isPureAstNode(node.expression)) {
         return false;
       }
       return true;
     }
     case "ExportNamedDeclaration": {
-      if (!isPureNode(node.declaration)) {
+      if (!isPureAstNode(node.declaration)) {
         return false;
       }
       return true;
     }
     case "ExportDefaultDeclaration": {
-      if (!isPureNode(node.declaration)) {
+      if (!isPureAstNode(node.declaration)) {
         return false;
       }
       return true;
     }
     default: {
-      if (!isPureNodeType(node.type)) {
+      if (!isPureAstNodeType(node.type)) {
         return false;
       }
       return true;
@@ -197,11 +263,6 @@ export function isPureNode(node: AstNode) {
   }
 }
 
-export function isPureProgram(parsed: Ast): boolean {
-  for (const stmt of parsed.program.body) {
-    if (!isPureNode(stmt)) {
-      return false;
-    }
-  }
-  return true;
+function isPureAstNodeType(type: string): boolean {
+  return WHITELIST_NODE_TYPE.includes(type);
 }
