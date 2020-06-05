@@ -1,4 +1,4 @@
-import { Bundler } from "./../src/index";
+import { Bundler, bundle } from "./../src/index";
 import assert from "assert";
 
 // runtime
@@ -20,9 +20,7 @@ globalThis.__out = foo + "-" + bar;
 };
 
 test("bundle and eval", async () => {
-  const bundler = new Bundler(files);
-  const built = await bundler.bundle("/index.js", {});
-  // console.log(built);
+  const built = await bundle(files, "/index.js", {});
   eval(built);
   // @ts-ignore
   assert.equal(globalThis.__out, "foo$default-bar$foo$default");

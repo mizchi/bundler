@@ -13,7 +13,7 @@ export function treeshakeExports(
   entry: string
 ): AnalyzedChunk[] {
   const requiredExportsMap = buildRequiredExportsMap(chunks);
-  console.log("requiredExportsMap", requiredExportsMap);
+  // console.log("requiredExportsMap", requiredExportsMap);
   return chunks.map((mod) => {
     if (mod.filepath === entry) {
       return mod;

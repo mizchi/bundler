@@ -8,7 +8,6 @@ import type {
   WorkerSource,
   Ast,
   AstNode,
-  ModulesMap,
 } from "./types";
 
 import path from "path";

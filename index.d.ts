@@ -19,3 +19,9 @@ export class Bundler {
     >
   >;
 }
+
+export async function bundle(
+  files: { [k: string]: string },
+  entry: string,
+  options?: { optimize?: boolean; exposeToGlobal?: string | null }
+): Promise<string>;
