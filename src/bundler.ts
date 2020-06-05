@@ -23,7 +23,7 @@ export class Bundler {
   ) {
     await this.addModule(entry);
     const chunks = aggregateChunks(this.modulesMap, entry);
-    const optimizedChunks = _optimize ? optimize(chunks) : chunks;
+    const optimizedChunks = _optimize ? optimize(chunks, entry) : chunks;
     return render(entry, optimizedChunks, { exposeToGlobal: exposeToGlobal });
   }
 

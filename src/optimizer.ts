@@ -4,16 +4,19 @@ import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 import { analyzeModule, isPureNode } from "./analyzer";
 
-export function optimize(chunks: AnalyzedChunk[]) {
-  return eliminateUnusedImports(treeshakeExports(chunks));
+export function optimize(chunks: AnalyzedChunk[], entry: string) {
+  return eliminateUnusedImports(treeshakeExports(chunks, entry));
 }
 
-export function treeshakeExports(chunks: AnalyzedChunk[]): AnalyzedChunk[] {
-  const requiredMap = new Map<string, string[]>();
+export function treeshakeExports(
+  chunks: AnalyzedChunk[],
+  entry: string
+): AnalyzedChunk[] {
+  const requiredExportsMap = new Map<string, string[]>();
   chunks.forEach((m) => {
     m.imports.forEach((imp) => {
-      const list = requiredMap.get(imp.filepath) || [];
-      requiredMap.set(imp.filepath, [
+      const list = requiredExportsMap.get(imp.filepath) || [];
+      requiredExportsMap.set(imp.filepath, [
         ...list,
         ...imp.specifiers.map((s) => s.importedName),
       ]);
@@ -21,7 +24,10 @@ export function treeshakeExports(chunks: AnalyzedChunk[]): AnalyzedChunk[] {
   });
 
   return chunks.map((mod) => {
-    const required = requiredMap.get(mod.filepath) || [];
+    if (mod.filepath === entry) {
+      return mod;
+    }
+    const required = requiredExportsMap.get(mod.filepath) || [];
     const cloned = t.cloneNode(mod.ast);
     traverse(cloned, {
       ExportNamedDeclaration(nodePath) {
