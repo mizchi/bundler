@@ -7,12 +7,12 @@ Readable output bundler
 - [x] Delete build cache and rebuid
 - [x] `import "./xxx";`
 - [x] `export const a = 1;`
-- [ ] Support import-map
-- [ ] Tree shaking
+- [x] Tree shaking
   - [x] detect side effects
   - [x] Strip unused import
   - [x] Remove modules code by treeshake
-  - [ ] Remove unused exports
+  - [x] Remove unused exports
+- [ ] Support import-map
 - [ ] Inline dynamic import
 - [ ] Dynamic import chunks
 - [ ] Support name resolver

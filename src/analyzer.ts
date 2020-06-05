@@ -3,53 +3,37 @@ import type { Export, Import, Specifier } from "./types";
 
 import path from "path";
 import traverse from "@babel/traverse";
+import { isPureNode } from "./sideEffect";
 
-export function analyzeScope(
+export function analyzeModule(
   ast: Program,
   basepath: string
 ): { exports: Export[]; imports: Import[] } {
   let imports: Import[] = [];
   let exports: Export[] = [];
 
+  const refenrencedIdentifiers = getReferencedIdentifiers({
+    ...ast,
+    body: ast.body.filter((x) => x.type !== "ImportDeclaration"),
+  });
+
   traverse(ast, {
     ImportDeclaration(nodePath) {
       const target = nodePath.node.source.value;
       const absPath = path.join(basepath, target);
-      const importers: Specifier[] = [];
+      const specifiers: Specifier[] = [];
 
       for (const specifier of nodePath.node.specifiers) {
-        let used = false;
-        traverse(
-          {
-            ...ast,
-            body: ast.body.filter((n) => n.type !== "ImportDeclaration"),
-          },
-          {
-            Identifier(identifierNodePath) {
-              // TODO: Not member property
-              // not b of a.b
-              if (
-                identifierNodePath.parent.type === "MemberExpression" &&
-                identifierNodePath.node === identifierNodePath.parent.property
-              ) {
-                return;
-              }
-              if (identifierNodePath.node.name === specifier.local.name) {
-                used = true;
-              }
-            },
-          }
-        );
-        // const from = filepath
+        const used = refenrencedIdentifiers.includes(specifier.local.name);
         if (specifier.type === "ImportSpecifier") {
-          importers.push({
+          specifiers.push({
             localName: specifier.local.name,
             importedName: specifier.imported.name,
             used,
           });
         }
         if (specifier.type === "ImportDefaultSpecifier") {
-          importers.push({
+          specifiers.push({
             localName: specifier.local.name,
             importedName: "default",
             used,
@@ -59,13 +43,14 @@ export function analyzeScope(
 
       imports.push({
         filepath: absPath,
-        specifiers: importers,
+        specifiers: specifiers,
       });
     },
     ExportDeclaration(nodePath) {
       if (nodePath.node.type === "ExportNamedDeclaration") {
         const decl = nodePath.node.declaration.declarations[0];
-        exports.push({ exportedName: decl.id.name });
+        const pure = isPureNode(decl.init);
+        exports.push({ exportedName: decl.id.name, pure });
       }
     },
   });
@@ -73,4 +58,33 @@ export function analyzeScope(
     imports,
     exports,
   };
+}
+
+function getReferencedIdentifiers(ast: Program) {
+  const ids: string[] = [];
+  traverse(ast, {
+    Identifier(nodePath) {
+      // console.log(nodePath.node.name, "in", nodePath.parent.type);
+      if (
+        nodePath.parent.type === "ObjectProperty" &&
+        nodePath.node !== nodePath.parent.value
+      ) {
+        // console.log(nodePath.node.name, "is label of", nodePath.parent.key);
+        return;
+      }
+
+      if (
+        nodePath.parent.type === "MemberExpression" &&
+        nodePath.node !== nodePath.parent.object
+      ) {
+        // console.log(nodePath.node.name, "is property of", nodePath.parent.object);
+        return;
+      }
+      if (!ids.includes(nodePath.node.name)) {
+        ids.push(nodePath.node.name);
+      }
+      // console.log(nodePath.node.name);
+    },
+  });
+  return ids;
 }

@@ -4,21 +4,21 @@ import path from "path";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 
-export function transformToRunnerModule(ast: Program, basepath: string) {
-  return transform(ast, basepath, {
+export function transformToModuleRunner(ast: Program, basepath: string) {
+  return transformToRunner(ast, basepath, {
     preserveExport: false,
     preserveExternalImport: true,
   });
 }
 
-export function transformToEntry(ast: Program, basepath: string) {
-  return transform(ast, basepath, {
+export function transformToEntryRunner(ast: Program, basepath: string) {
+  return transformToRunner(ast, basepath, {
     preserveExport: true,
     preserveExternalImport: true,
   });
 }
 
-export function transform(
+export function transformToRunner(
   ast: Program,
   basepath: string,
   {
@@ -36,8 +36,6 @@ export function transform(
         return;
       }
       const absPath = path.join(basepath, target);
-
-      // TODO: check import/export matching
       const names: [string, string][] = [];
       nodePath.node.specifiers.forEach((n) => {
         if (n.type === "ImportDefaultSpecifier") {
@@ -48,22 +46,23 @@ export function transform(
         }
       });
 
-      const newNode = t.variableDeclaration("const", [
-        t.variableDeclarator(
-          t.objectPattern(
-            names.map(([imported, local]) => {
-              return t.objectProperty(
-                t.identifier(imported),
-                t.identifier(local)
-              );
-            })
+      newImportStmts.push(
+        t.variableDeclaration("const", [
+          t.variableDeclarator(
+            t.objectPattern(
+              names.map(([imported, local]) => {
+                return t.objectProperty(
+                  t.identifier(imported),
+                  t.identifier(local)
+                );
+              })
+            ),
+            t.callExpression(t.identifier("_$_import"), [
+              t.stringLiteral(absPath),
+            ])
           ),
-          t.callExpression(t.identifier("_$_import"), [
-            t.stringLiteral(absPath),
-          ])
-        ),
-      ]);
-      newImportStmts.push(newNode);
+        ])
+      );
       nodePath.replaceWith(t.emptyStatement());
     },
     ExportDefaultDeclaration(nodePath) {

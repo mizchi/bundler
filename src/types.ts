@@ -23,9 +23,10 @@ export type Import = {
 
 export type Export = {
   exportedName: string;
+  pure: boolean;
 };
 
-export type ParsedModule = {
+export type AnalyzedChunk = {
   raw: string;
   ast: Program;
   filepath: string;
@@ -34,4 +35,4 @@ export type ParsedModule = {
   hasSideEffect: boolean;
 };
 
-export type ModulesMap = Map<string, ParsedModule>;
+export type ModulesMap = Map<string, AnalyzedChunk>;

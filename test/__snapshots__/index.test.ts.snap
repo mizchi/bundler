@@ -27,8 +27,6 @@ const { default: foo, a: a, b: c } = _$_import(\\"/foo.js\\");
 
 const { default: bar } = _$_import(\\"/bar.js\\");
 
-export const x: number = c;
-export default 1;
 console.log(foo, bar);
 "
 `;
@@ -42,9 +40,6 @@ const _$_modules = {};
 // -- entry --
 
 console.log(\\"eval foo once\\");
-export default \\"foo$default\\";
-export const b = \\"b\\";
-export const a = \\"a\\";
 "
 `;
 
