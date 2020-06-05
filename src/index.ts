@@ -1,4 +1,4 @@
-import type { Program } from "@babel/types";
+import type { VariableDeclarator } from "@babel/types";
 import type { IPromisesAPI } from "memfs/lib/promises";
 import type {
   BundleOptions,
@@ -6,15 +6,16 @@ import type {
   ParsedModule,
   ModulesMap,
 } from "./types";
-
+import * as t from "@babel/types";
 import path from "path";
 import { generate } from "./generator";
+import traverse from "@babel/traverse";
 import { parse } from "./parser";
 import { analyzeScope } from "./analyzer";
 import { transformToEntry, transformToRunnerModule } from "./transformer";
-import { treeshake } from "./treeshaker";
+import { dropUnusedImports } from "./treeshaker";
 import { createMemoryFs, readFile } from "./memfsHelpers";
-import { isPure } from "./sideEffect";
+import { isPure, isPureNode } from "./sideEffect";
 
 export class Bundler {
   private modulesMap = new Map<string, ParsedModule>();
@@ -32,7 +33,6 @@ export class Bundler {
       preserveExternalImport,
     };
     await this.addModule(entry);
-    // console.log(this.modulesMap);
     const ctx = new BuildContext(entry, this.modulesMap);
     return await ctx.emit(internalOptions);
   }
@@ -87,8 +87,6 @@ export class Bundler {
 type BuildContextModulesList = Array<
   ParsedModule & {
     filepath: string;
-    treeshaked: Program;
-    importedBy: Array<{ filepath: string; importedName: string[] }>;
   }
 >;
 
@@ -101,10 +99,9 @@ class BuildContext {
     const entryMod = this.modulesMap.get(this.entryPath)!;
     const basepath = path.dirname(entryMod.filepath);
 
-    const treeshaked = treeshake(
+    const treeshaked = dropUnusedImports(
       entryMod.ast,
       this.entryPath,
-      [],
       this.modulesMap
     );
 
@@ -113,22 +110,21 @@ class BuildContext {
     const mod = {
       ...entryMod,
       ...analyzed,
-      importedBy: [],
-      treeshaked,
+      ast: treeshaked,
     };
-    // this.ctxModulesMap.push(mod);
 
     let additianalCode = "";
     if (exposeToGlobal) {
       additianalCode += `/* Expose import */ globalThis.${exposeToGlobal} = {import: _$_import};`;
     }
     this.bundleRecursively(mod);
+    this.optimize();
     const moduleCodes: string[] = [];
     for (const i of this.ctxModulesMap.filter(
       (x) => x.filepath !== this.entryPath
     )) {
       const basepath = path.dirname(i.filepath);
-      const runnerAst = transformToRunnerModule(i.treeshaked, basepath);
+      const runnerAst = transformToRunnerModule(i.ast, basepath);
       const moduleCode = generate(runnerAst);
       moduleCodes.push(
         `"${i.filepath}": (_$_exports) => {${moduleCode}\nreturn _$_exports}`
@@ -142,11 +138,50 @@ class BuildContext {
     return runnerTemplate(code, additianalCode, entryCode);
   }
 
+  optimize() {
+    const requiredMap = new Map<string, string[]>();
+    this.ctxModulesMap.forEach((m) => {
+      m.imports.forEach((imp) => {
+        const list = requiredMap.get(imp.filepath) || [];
+        requiredMap.set(imp.filepath, [
+          ...list,
+          ...imp.specifiers.map((s) => s.importedName),
+        ]);
+      });
+    });
+
+    for (const mod of this.ctxModulesMap) {
+      const required = requiredMap.get(mod.filepath) || [];
+      const cloned = t.cloneNode(mod.ast);
+      traverse(cloned, {
+        ExportNamedDeclaration(nodePath) {
+          const decl: VariableDeclarator =
+            nodePath.node.declaration?.declarations[0];
+          if (decl.init && decl.id.type === "Identifier") {
+            const name = decl.id.name;
+            if (!required.includes(name) && isPureNode(decl.init)) {
+              nodePath.replaceWith(t.emptyStatement());
+            }
+          }
+        },
+        ExportDefaultDeclaration(nodePath) {
+          if (
+            !required.includes("default") &&
+            isPureNode(nodePath.node.declaration)
+          ) {
+            nodePath.replaceWith(t.emptyStatement());
+          }
+        },
+      });
+      mod.ast = cloned;
+    }
+  }
+
   bundleRecursively(mod: ParsedModule) {
     if (this.ctxModulesMap.find((x) => x.filepath === mod.filepath)) {
       return;
     }
-    const shaked = treeshake(mod.ast, mod.filepath, [], this.modulesMap);
+    const shaked = dropUnusedImports(mod.ast, mod.filepath, this.modulesMap);
     const basepath = path.dirname(mod.filepath);
     const analyzed = analyzeScope(shaked, basepath);
 
@@ -160,9 +195,8 @@ class BuildContext {
     this.ctxModulesMap.push({
       ...mod,
       ...analyzed,
-      importedBy: [],
       filepath: mod.filepath,
-      treeshaked: treeshake(mod.ast, mod.filepath, [], this.modulesMap),
+      ast: dropUnusedImports(mod.ast, mod.filepath, this.modulesMap),
     });
   }
 }

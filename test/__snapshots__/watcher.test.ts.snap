@@ -5,7 +5,6 @@ exports[`watcher 1`] = `
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-
 const _$_modules = {
   \\"/foo.js\\": (_$_exports) => {
     _$_exports.default = \\"foo\\";
@@ -16,7 +15,6 @@ const _$_modules = {
     return _$_exports;
   },
 };
-
 // -- entry --
 
 const { default: foo } = _$_import(\\"/foo.js\\");
@@ -32,9 +30,7 @@ exports[`watcher 2`] = `
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-
 const _$_modules = {};
-
 // -- entry --
 
 console.log(1);
@@ -46,7 +42,6 @@ exports[`watcher 2 1`] = `
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-
 const _$_modules = {
   \\"/foo.js\\": (_$_exports) => {
     _$_exports.default = \\"foo\\";
@@ -57,7 +52,6 @@ const _$_modules = {
     return _$_exports;
   },
 };
-
 // -- entry --
 
 const { default: foo } = _$_import(\\"/foo.js\\");
@@ -73,14 +67,12 @@ exports[`watcher 2 2`] = `
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-
 const _$_modules = {
   \\"/bar.js\\": (_$_exports) => {
     _$_exports.default = \\"bar\\";
     return _$_exports;
   },
 };
-
 // -- entry --
 
 const { default: bar } = _$_import(\\"/bar.js\\");

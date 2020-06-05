@@ -63,6 +63,7 @@ assert.ok(pure);
 // console.log(has);
 
 (async () => {
+  console.time("build");
   const bundler = new Bundler({
     "/a.js": "console.log(1)",
     "/b.js": "export default 1;",
@@ -78,5 +79,6 @@ assert.ok(pure);
     `,
   });
   const code = await bundler.bundle("/index.js");
+  console.timeEnd("build");
   console.log(format(code, { parser: "babel" }));
 })();

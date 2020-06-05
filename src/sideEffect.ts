@@ -27,7 +27,7 @@ function isPureNodeType(type: string): boolean {
   return WHITELIST_NODE_TYPE.includes(type);
 }
 
-function isPureNode(node: Node) {
+export function isPureNode(node: Node) {
   switch (node.type) {
     case "VariableDeclaration": {
       for (const declaration of node.declarations) {

@@ -5,7 +5,6 @@ exports[`bundle 1`] = `
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-
 const _$_modules = {
   \\"/foo.js\\": (_$_exports) => {
     console.log(\\"eval foo once\\");
@@ -22,7 +21,6 @@ const _$_modules = {
     return _$_exports;
   },
 };
-
 // -- entry --
 
 const { default: foo, a: a, b: c } = _$_import(\\"/foo.js\\");
@@ -40,9 +38,7 @@ exports[`bundle 2`] = `
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-
 const _$_modules = {};
-
 // -- entry --
 
 console.log(\\"eval foo once\\");
@@ -57,17 +53,13 @@ exports[`bundle 3`] = `
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
-
 const _$_modules = {
   \\"/foo.js\\": (_$_exports) => {
     console.log(\\"eval foo once\\");
     _$_exports.default = \\"foo$default\\";
-    _$_exports.b = \\"b\\";
-    _$_exports.a = \\"a\\";
     return _$_exports;
   },
 };
-
 // -- entry --
 
 const { default: foo } = _$_import(\\"/foo.js\\");

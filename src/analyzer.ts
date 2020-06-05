@@ -26,6 +26,14 @@ export function analyzeScope(
           },
           {
             Identifier(identifierNodePath) {
+              // TODO: Not member property
+              // not b of a.b
+              if (
+                identifierNodePath.parent.type === "MemberExpression" &&
+                identifierNodePath.node === identifierNodePath.parent.property
+              ) {
+                return;
+              }
               if (identifierNodePath.node.name === specifier.local.name) {
                 used = true;
               }

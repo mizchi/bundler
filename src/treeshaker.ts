@@ -5,10 +5,9 @@ import path from "path";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 
-export function treeshake(
+export function dropUnusedImports(
   ast: Program,
   filepath: string,
-  requiredExports: string[],
   moduleMaps: Map<string, ParsedModule>
 ): Program {
   const cloned = t.cloneNode(ast);
