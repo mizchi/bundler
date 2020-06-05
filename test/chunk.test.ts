@@ -8,10 +8,21 @@ const p = import("./foo.js");
 `,
 };
 
-test("bundleChunks", async () => {
+test("bundleChunk", async () => {
   const bundler = new Bundler(fileMap);
   const chunks = await bundler.bundleChunks("/index.js", { optimize: true });
   const entry = chunks?.find((c) => c.entry === "/index.js");
   assert.ok(entry?.builtCode.includes(`import("/_$_foo.js")`));
+  assert.ok(chunks?.length === 2);
+});
+
+test("bundleChunks: publicPath", async () => {
+  const bundler = new Bundler(fileMap);
+  const chunks = await bundler.bundleChunks("/index.js", {
+    optimize: true,
+    publicPath: "/dist/",
+  });
+  const entry = chunks?.find((c) => c.entry === "/index.js");
+  assert.ok(entry?.builtCode.includes(`import("/dist/_$_foo.js")`));
   assert.ok(chunks?.length === 2);
 });

@@ -8,7 +8,11 @@ import generateAsBabel from "@babel/generator";
 export function render(
   entryPath: string,
   chunks: AnalyzedChunk[],
-  opts: { exposeToGlobal: string | null; transformDynamicImport: boolean }
+  opts: {
+    exposeToGlobal: string | null;
+    transformDynamicImport: boolean;
+    publicPath?: string;
+  }
 ) {
   const moduleCodes: string[] = [];
   const basepath = path.dirname(entryPath);
@@ -19,6 +23,7 @@ export function render(
     const basepath = path.dirname(chunk.filepath);
     const runnerAst = transformToModuleRunner(chunk.ast, basepath, {
       transformDynamicImport: opts.transformDynamicImport,
+      publicPath: opts.publicPath ?? "/",
     });
     const moduleCode = generate(runnerAst);
     moduleCodes.push(
@@ -36,6 +41,7 @@ export function render(
   const entryCode = generate(
     transformToEntryRunner(entryModule.ast, basepath, {
       transformDynamicImport: opts.transformDynamicImport,
+      publicPath: opts.publicPath ?? "/",
     })
   );
   return runnerTemplate(code, additianalCode, entryCode);

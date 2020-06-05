@@ -8,24 +8,32 @@ import { filepathToFlatSymbol } from "./helpers";
 export function transformToModuleRunner(
   ast: Program,
   basepath: string,
-  { transformDynamicImport = false }: { transformDynamicImport?: boolean } = {}
+  {
+    transformDynamicImport,
+    publicPath,
+  }: { transformDynamicImport: boolean; publicPath: string }
 ) {
   return transformToRunner(ast, basepath, {
     preserveExport: false,
     preserveExternalImport: true,
     transformDynamicImport,
+    publicPath,
   });
 }
 
 export function transformToEntryRunner(
   ast: Program,
   basepath: string,
-  { transformDynamicImport = false }: { transformDynamicImport?: boolean } = {}
+  {
+    transformDynamicImport,
+    publicPath,
+  }: { transformDynamicImport: boolean; publicPath: string }
 ) {
   return transformToRunner(ast, basepath, {
     preserveExport: true,
     preserveExternalImport: true,
     transformDynamicImport,
+    publicPath,
   });
 }
 
@@ -36,10 +44,12 @@ export function transformToRunner(
     preserveExport,
     preserveExternalImport,
     transformDynamicImport,
+    publicPath,
   }: {
     preserveExport: boolean;
     preserveExternalImport: boolean;
     transformDynamicImport: boolean;
+    publicPath: string;
   }
 ) {
   const cloned = t.cloneNode(ast);
@@ -54,7 +64,7 @@ export function transformToRunner(
         const arg = nodePath.node.arguments[0];
         if (arg.type === "StringLiteral") {
           const absPath = path.join(basepath, arg.value);
-          arg.value = filepathToFlatSymbol(absPath);
+          arg.value = filepathToFlatSymbol(absPath, publicPath);
         }
       }
     },

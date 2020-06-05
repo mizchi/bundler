@@ -9,7 +9,9 @@ const p = import("./foo.js");
 };
 const bundler = new Bundler(fileMap);
 (async () => {
-  const chunks = await bundler.bundleChunks("/index.js");
+  const chunks = await bundler.bundleChunks("/index.js", {
+    publicPath: "/dist/",
+  });
   // console.log(format(code, { parser: "babel" }));
   console.log(chunks);
 })();

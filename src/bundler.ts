@@ -38,10 +38,12 @@ export class Bundler {
       exposeToGlobal = null,
       optimize: _optimize = true,
       root = true,
+      publicPath = "/",
     }: {
       exposeToGlobal?: string | null;
       optimize?: boolean;
       root?: boolean;
+      publicPath?: string;
     } = {},
     builtChunks: Array<
       | {
@@ -66,6 +68,7 @@ export class Bundler {
     const built = render(entry, optimizedChunks, {
       exposeToGlobal: exposeToGlobal,
       transformDynamicImport: true,
+      publicPath,
     });
 
     if (root) {
@@ -78,7 +81,7 @@ export class Bundler {
       builtChunks.push({
         type: "chunk",
         entry,
-        chunkName: filepathToFlatSymbol(entry),
+        chunkName: filepathToFlatSymbol(entry, publicPath),
         builtCode: built,
       });
     }
@@ -91,6 +94,7 @@ export class Bundler {
           exposeToGlobal: null,
           optimize: _optimize,
           root: false,
+          publicPath,
         },
         builtChunks
       );

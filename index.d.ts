@@ -5,4 +5,17 @@ export class Bundler {
     entry: string,
     options?: { optimize?: boolean; exposeToGlobal?: string | null }
   ): Promise<string>;
+  bundleChunks(
+    entry: string,
+    options?: {
+      optimize?: boolean;
+      exposeToGlobal?: string | null;
+      pubicPath?: boolean;
+    }
+  ): Promise<
+    Array<
+      | { type: "entry"; builtCode: string }
+      | { type: "chunk"; chunkName: string; builtCode: string }
+    >
+  >;
 }
