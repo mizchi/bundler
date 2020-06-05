@@ -3,18 +3,29 @@ import type { Program } from "@babel/types";
 import path from "path";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
+import { filepathToFlatSymbol } from "./helpers";
 
-export function transformToModuleRunner(ast: Program, basepath: string) {
+export function transformToModuleRunner(
+  ast: Program,
+  basepath: string,
+  { transformDynamicImport = false }: { transformDynamicImport?: boolean } = {}
+) {
   return transformToRunner(ast, basepath, {
     preserveExport: false,
     preserveExternalImport: true,
+    transformDynamicImport,
   });
 }
 
-export function transformToEntryRunner(ast: Program, basepath: string) {
+export function transformToEntryRunner(
+  ast: Program,
+  basepath: string,
+  { transformDynamicImport = false }: { transformDynamicImport?: boolean } = {}
+) {
   return transformToRunner(ast, basepath, {
     preserveExport: true,
     preserveExternalImport: true,
+    transformDynamicImport,
   });
 }
 
@@ -24,11 +35,30 @@ export function transformToRunner(
   {
     preserveExport,
     preserveExternalImport,
-  }: { preserveExport: boolean; preserveExternalImport: boolean }
+    transformDynamicImport,
+  }: {
+    preserveExport: boolean;
+    preserveExternalImport: boolean;
+    transformDynamicImport: boolean;
+  }
 ) {
   const cloned = t.cloneNode(ast);
   const newImportStmts: t.VariableDeclaration[] = [];
   traverse(cloned, {
+    CallExpression(nodePath) {
+      if (!transformDynamicImport) {
+        return;
+      }
+      // console.log("CallExpression", nodePath.node);
+      if (nodePath.node.callee.type == "Import") {
+        const arg = nodePath.node.arguments[0];
+        if (arg.type === "StringLiteral") {
+          const absPath = path.join(basepath, arg.value);
+          arg.value = filepathToFlatSymbol(absPath);
+        }
+      }
+    },
+
     ImportDeclaration(nodePath) {
       const target = nodePath.node.source.value;
       if (preserveExternalImport && target.startsWith("http")) {

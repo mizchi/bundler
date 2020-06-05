@@ -22,6 +22,10 @@ export type Import = {
   specifiers: Specifier[];
 };
 
+export type DynamicImport = {
+  filepath: string;
+};
+
 export type Export = {
   exportedName: string;
   pure: boolean;
@@ -32,6 +36,7 @@ export type AnalyzedChunk = {
   ast: Program;
   filepath: string;
   imports: Import[];
+  dynamicImports: DynamicImport[];
   exports: Export[];
   pure: boolean;
 };

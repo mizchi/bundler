@@ -1,11 +1,14 @@
+import type { AnalyzedChunk } from "./types";
+import type { Program } from "@babel/types";
+
 import path from "path";
 import { transformToEntryRunner, transformToModuleRunner } from "./transformer";
-import type { AnalyzedChunk } from "./types";
+import generateAsBabel from "@babel/generator";
 
 export function render(
   entryPath: string,
   chunks: AnalyzedChunk[],
-  opts: { exposeToGlobal: string | null }
+  opts: { exposeToGlobal: string | null; transformDynamicImport: boolean }
 ) {
   const moduleCodes: string[] = [];
   const basepath = path.dirname(entryPath);
@@ -14,7 +17,9 @@ export function render(
 
   for (const chunk of moduleChunks) {
     const basepath = path.dirname(chunk.filepath);
-    const runnerAst = transformToModuleRunner(chunk.ast, basepath);
+    const runnerAst = transformToModuleRunner(chunk.ast, basepath, {
+      transformDynamicImport: opts.transformDynamicImport,
+    });
     const moduleCode = generate(runnerAst);
     moduleCodes.push(
       `"${chunk.filepath}": (_$_exports) => {${moduleCode}\nreturn _$_exports}`
@@ -28,13 +33,13 @@ export function render(
     additianalCode += `/* Expose import */ globalThis.${opts.exposeToGlobal} = {import: _$_import};`;
   }
 
-  const entryCode = generate(transformToEntryRunner(entryModule.ast, basepath));
+  const entryCode = generate(
+    transformToEntryRunner(entryModule.ast, basepath, {
+      transformDynamicImport: opts.transformDynamicImport,
+    })
+  );
   return runnerTemplate(code, additianalCode, entryCode);
 }
-
-import type { Program } from "@babel/types";
-
-import generateAsBabel from "@babel/generator";
 
 export function generate(ast: Program): string {
   const gen = generateAsBabel(ast);
@@ -49,6 +54,7 @@ const runnerTemplate = (
 const _$_exported = {};
 const _$_import = (id) => _$_exported[id] || _$_modules[id](_$_exported[id] = {});
 const _$_modules = ${moduleCodes};
+
 ${additianalCode};
 
 // -- entry --

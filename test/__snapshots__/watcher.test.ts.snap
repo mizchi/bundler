@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`watcher 1`] = `
-"// minibundle generate
+"// @mizchi/bundler generate
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
@@ -15,6 +15,7 @@ const _$_modules = {
     return _$_exports;
   },
 };
+
 // -- entry --
 
 const { default: foo } = _$_import(\\"/foo.js\\");
@@ -26,11 +27,12 @@ console.log(foo, bar);
 `;
 
 exports[`watcher 2`] = `
-"// minibundle generate
+"// @mizchi/bundler generate
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
 const _$_modules = {};
+
 // -- entry --
 
 console.log(1);
@@ -38,7 +40,7 @@ console.log(1);
 `;
 
 exports[`watcher 2 1`] = `
-"// minibundle generate
+"// @mizchi/bundler generate
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
@@ -52,6 +54,7 @@ const _$_modules = {
     return _$_exports;
   },
 };
+
 // -- entry --
 
 const { default: foo } = _$_import(\\"/foo.js\\");
@@ -63,7 +66,7 @@ console.log(foo, bar);
 `;
 
 exports[`watcher 2 2`] = `
-"// minibundle generate
+"// @mizchi/bundler generate
 const _$_exported = {};
 const _$_import = (id) =>
   _$_exported[id] || _$_modules[id]((_$_exported[id] = {}));
@@ -73,6 +76,7 @@ const _$_modules = {
     return _$_exports;
   },
 };
+
 // -- entry --
 
 const { default: bar } = _$_import(\\"/bar.js\\");

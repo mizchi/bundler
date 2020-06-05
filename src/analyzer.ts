@@ -1,5 +1,5 @@
 import type { Program, Node } from "@babel/types";
-import type { Export, Import, Specifier } from "./types";
+import type { Export, Import, Specifier, DynamicImport } from "./types";
 
 import path from "path";
 import traverse from "@babel/traverse";
@@ -7,9 +7,15 @@ import traverse from "@babel/traverse";
 export function analyzeModule(
   ast: Program,
   basepath: string
-): { exports: Export[]; imports: Import[]; pure: boolean } {
+): {
+  exports: Export[];
+  imports: Import[];
+  dynamicImports: DynamicImport[];
+  pure: boolean;
+} {
   let imports: Import[] = [];
   let exports: Export[] = [];
+  let dynamicImports: DynamicImport[] = [];
 
   const refenrencedIdentifiers = getReferencedIdentifiers({
     ...ast,
@@ -17,6 +23,19 @@ export function analyzeModule(
   });
 
   traverse(ast, {
+    // detect dynamic import
+    CallExpression(nodePath) {
+      // console.log("CallExpression", nodePath.node);
+      if (nodePath.node.callee.type == "Import") {
+        const arg = nodePath.node.arguments[0];
+        if (arg.type === "StringLiteral") {
+          const absPath = path.join(basepath, arg.value);
+          dynamicImports.push({
+            filepath: absPath,
+          });
+        }
+      }
+    },
     ImportDeclaration(nodePath) {
       const target = nodePath.node.source.value;
       const absPath = path.join(basepath, target);
@@ -56,6 +75,7 @@ export function analyzeModule(
   return {
     imports,
     exports,
+    dynamicImports,
     pure: isPureProgram(ast),
   };
 }

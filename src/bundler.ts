@@ -9,6 +9,7 @@ import type { BundleOptions, AnalyzedChunk } from "./types";
 import { ModulesMap } from "./types";
 import { optimize } from "./optimizer";
 import { render } from "./renderer";
+import { filepathToFlatSymbol } from "./helpers";
 
 export class Bundler {
   private modulesMap = new Map<string, AnalyzedChunk>();
@@ -17,6 +18,7 @@ export class Bundler {
   constructor(public files: { [k: string]: string }) {
     this.fs = createMemoryFs(files);
   }
+
   public async bundle(
     entry: string,
     { exposeToGlobal = null, optimize: _optimize = true }: BundleOptions = {}
@@ -24,7 +26,77 @@ export class Bundler {
     await this.addModule(entry);
     const chunks = aggregateChunks(this.modulesMap, entry);
     const optimizedChunks = _optimize ? optimize(chunks, entry) : chunks;
-    return render(entry, optimizedChunks, { exposeToGlobal: exposeToGlobal });
+    return render(entry, optimizedChunks, {
+      exposeToGlobal,
+      transformDynamicImport: false,
+    });
+  }
+
+  public async bundleChunks(
+    entry: string,
+    {
+      exposeToGlobal = null,
+      optimize: _optimize = true,
+      root = true,
+    }: {
+      exposeToGlobal?: string | null;
+      optimize?: boolean;
+      root?: boolean;
+    } = {},
+    builtChunks: Array<
+      | {
+          type: "entry";
+          entry: string;
+          builtCode: string;
+        }
+      | {
+          type: "chunk";
+          entry: string;
+          chunkName: string;
+          builtCode: string;
+        }
+    > = []
+  ) {
+    if (builtChunks.find((c) => c.entry === entry)) {
+      return;
+    }
+    await this.addModule(entry);
+    const chunks = aggregateChunks(this.modulesMap, entry);
+    const optimizedChunks = _optimize ? optimize(chunks, entry) : chunks;
+    const built = render(entry, optimizedChunks, {
+      exposeToGlobal: exposeToGlobal,
+      transformDynamicImport: true,
+    });
+
+    if (root) {
+      builtChunks.push({
+        type: "entry",
+        entry,
+        builtCode: built,
+      });
+    } else {
+      builtChunks.push({
+        type: "chunk",
+        entry,
+        chunkName: filepathToFlatSymbol(entry),
+        builtCode: built,
+      });
+    }
+
+    const dynamicImports = optimizedChunks.map((c) => c.dynamicImports).flat();
+    dynamicImports.forEach((i) => {
+      this.bundleChunks(
+        i.filepath,
+        {
+          exposeToGlobal: null,
+          optimize: _optimize,
+          root: false,
+        },
+        builtChunks
+      );
+    });
+    // console.log("bundle", dynamicImports);
+    return builtChunks;
   }
 
   public async updateModule(filepath: string, nextContent: string) {
@@ -45,6 +117,7 @@ export class Bundler {
   }
 
   private async addModule(filepath: string): Promise<void> {
+    // console.log("add module", filepath);
     if (this.modulesMap.has(filepath)) {
       return;
     }
@@ -53,11 +126,15 @@ export class Bundler {
     const raw = await readFile(this.fs, filepath);
     const ast = parse(raw, filepath);
 
-    const { imports, exports, pure } = analyzeModule(ast, basepath);
+    const { imports, exports, dynamicImports, pure } = analyzeModule(
+      ast,
+      basepath
+    );
 
     this.modulesMap.set(filepath, {
       raw,
       filepath,
+      dynamicImports,
       ast,
       imports,
       exports,
@@ -67,6 +144,9 @@ export class Bundler {
     // console.log("used", filepath, JSON.stringify(imports, null, 2));
     for (const i of imports) {
       await this.addModule(i.filepath);
+    }
+    for (const di of dynamicImports) {
+      await this.addModule(di.filepath);
     }
   }
 }
@@ -89,6 +169,15 @@ export function aggregateChunks(modulesMap: ModulesMap, entryPath: string) {
       const child = modulesMap.get(imp.filepath)!;
       _aggregate(child);
     }
+
+    // for (const dimp of mod.dynamicImports) {
+    //   if (chunks.find((x) => x.filepath === dimp.filepath)) {
+    //     continue;
+    //   }
+    //   const child = modulesMap.get(dimp.filepath)!;
+    //   _aggregate(child);
+    // }
+
     chunks.push(mod);
     return chunks;
   }

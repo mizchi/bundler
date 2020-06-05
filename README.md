@@ -51,7 +51,7 @@ Entry exports are left.
 
 ## TODO
 
-- [x] Delete build cache and rebuid
+- [x] Delete build cache and rebuild
 - [x] `import "./xxx";`
 - [x] `export const a = 1;`
 - [x] Tree shaking
@@ -59,17 +59,14 @@ Entry exports are left.
   - [x] Strip unused import
   - [x] Remove modules code by treeshake
   - [x] Remove unused exports
-- [ ]
+- [x] Dynamic import chunks: `bundler.bundleChunks(entry)`
 - [ ] Support import-map
-- [ ] Inline dynamic import
-- [ ] Dynamic import chunks
 - [ ] Support name resolver on `preservedExternalExports`
-- [ ] Worker
+- [ ] Inline Worker
 - [ ] `export { a } from "./b"`
 - [ ] `export * as x from "./c"`
 - [ ] `export { a }`
 - [ ] `export { a as x} from "./xxx"`
-- [ ] Try snowpack?
 
 ## LICENSE
 
