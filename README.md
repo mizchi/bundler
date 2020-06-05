@@ -60,6 +60,7 @@ Entry exports are left.
   - [x] Remove modules code by treeshake
   - [x] Remove unused exports
 - [x] Dynamic import chunks: `bundler.bundleChunks(entry)`
+- [x] publicPath
 - [ ] Support import-map
 - [ ] Support name resolver on `preservedExternalExports`
 - [ ] Inline Worker
