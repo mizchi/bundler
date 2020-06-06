@@ -79,13 +79,14 @@ WIP
 
 ## Dynamic library features
 
-- [ ] Skip import and export those are not relative
-- [ ] Support import-map
+- [x] Skip import and export those are not relative
+- [x] Support import-map
+- [x] Use with snowpack
 - [ ] name resolver on `preservedExternalImports` and `Worker`
-- [ ] Rewrite to pikacdn
-- [ ] Use with snowpack
+- [ ] Rewrite to pikacdn options
 - [ ] File watcher with node
 - [ ] Support tsx
+- [ ] Node fs/promises
 
 ## Icebox
 

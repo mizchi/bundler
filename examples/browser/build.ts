@@ -1,7 +1,5 @@
 // import { Bundler } from '.';
 import { Bundler } from "../../src/index";
-import { resolveImportMap } from "../../src/importMap";
-
 import fs from "fs/promises";
 import path from "path";
 import { watch } from "graceful-fs";
@@ -9,36 +7,13 @@ import { format } from "prettier";
 
 async function main() {
   const files: { [k: string]: string } = {
-    "/index.js": await fs.readFile(path.join(__dirname, "index.js"), "utf-8"),
+    "/index.js": await fs.readFile(
+      path.join(__dirname, "../index.js"),
+      "utf-8"
+    ),
   };
-  const webFiles = await fs.readdir(path.join(__dirname, "web_modules"));
-  for (const f of webFiles) {
-    if (f.endsWith(".js") || f.endsWith(".json")) {
-      files[path.join("/web_modules", f)] = await fs.readFile(
-        path.join(__dirname, "web_modules", f),
-        "utf-8"
-      );
-    }
-  }
-  const webCommonFiles = await fs.readdir(
-    path.join(__dirname, "web_modules/common")
-  );
-  for (const f of webCommonFiles) {
-    if (f.endsWith(".js") || f.endsWith(".json")) {
-      files[path.join("/web_modules/common", f)] = await fs.readFile(
-        path.join(__dirname, "web_modules/common", f),
-        "utf-8"
-      );
-    }
-  }
-
-  const importMap = resolveImportMap(
-    JSON.parse(files["/web_modules/import-map.json"]),
-    "/web_modules"
-  );
-  console.log(importMap);
   // console.log(files);
-  const bundler = new Bundler(files, importMap);
+  const bundler = new Bundler(files);
   const bundle = await bundler.bundle("/index.js");
   console.log(format(bundle, { parser: "babel" }));
   eval(bundle);

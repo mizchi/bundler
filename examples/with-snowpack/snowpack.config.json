@@ -1,0 +1,4 @@
+{
+  "install": ["preact", "preact-render-to-string"],
+  "exclude": ["build.ts"]
+}

@@ -3,6 +3,7 @@ import path from "path";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 import { filepathToFlatSymbol } from "./helpers";
+import { resolveSource } from "./importMap";
 
 export function transformToModuleRunner(
   ast: Ast,
@@ -61,7 +62,10 @@ export function transformToRunner(
         nodePath.node.callee.name === "Worker"
       ) {
         if (nodePath.node.arguments[0].type === "StringLiteral") {
-          const abspath = path.join(basepath, nodePath.node.arguments[0].value);
+          const abspath = resolveSource(
+            nodePath.node.arguments[0].value,
+            basepath
+          );
           nodePath.node.arguments[0].value = filepathToFlatSymbol(
             abspath,
             publicPath
@@ -77,7 +81,7 @@ export function transformToRunner(
       if (nodePath.node.callee.type == "Import") {
         const arg = nodePath.node.arguments[0];
         if (arg.type === "StringLiteral") {
-          const abspath = path.join(basepath, arg.value);
+          const abspath = resolveSource(arg.value, basepath);
           arg.value = filepathToFlatSymbol(abspath, publicPath);
         }
       }
@@ -89,7 +93,7 @@ export function transformToRunner(
         // Example: import "https://cdn.pika.dev/preact"
         return;
       }
-      const abspath = path.join(basepath, target);
+      const abspath = resolveSource(target, basepath);
 
       // if (
       //   nodePath.node.specifiers.length === 1 &&

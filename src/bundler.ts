@@ -5,17 +5,24 @@ import createFs from "memfs/lib/promises";
 import path from "path";
 import { analyzeModule } from "./analyzer";
 import { parse } from "./parser";
-import type { BundleOptions, AnalyzedChunk } from "./types";
+import type { BundleOptions, AnalyzedChunk, ImportMap } from "./types";
 import { ModulesMap } from "./types";
 import { optimize } from "./optimizer";
 import { render } from "./renderer";
 import { filepathToFlatSymbol } from "./helpers";
 
+const defaultImportMap = {
+  imports: {},
+};
+
 export class Bundler {
   private modulesMap = new Map<string, AnalyzedChunk>();
   public fs: IPromisesAPI;
 
-  constructor(public files: { [k: string]: string }) {
+  constructor(
+    public files: { [k: string]: string },
+    public importMap: ImportMap = defaultImportMap
+  ) {
     this.fs = createMemoryFs(files);
   }
 
@@ -25,7 +32,9 @@ export class Bundler {
   ) {
     await this.addModule(entry);
     const chunks = aggregateChunks(this.modulesMap, entry);
-    const optimizedChunks = _optimize ? optimize(chunks, entry) : chunks;
+    const optimizedChunks = _optimize
+      ? optimize(chunks, entry, this.importMap)
+      : chunks;
     return render(entry, optimizedChunks, {
       exposeToGlobal,
       transformDynamicImport: false,
@@ -64,7 +73,9 @@ export class Bundler {
     }
     await this.addModule(entry);
     const chunks = aggregateChunks(this.modulesMap, entry);
-    const optimizedChunks = _optimize ? optimize(chunks, entry) : chunks;
+    const optimizedChunks = _optimize
+      ? optimize(chunks, entry, this.importMap)
+      : chunks;
     const built = render(entry, optimizedChunks, {
       exposeToGlobal: exposeToGlobal,
       transformDynamicImport: true,
@@ -144,7 +155,7 @@ export class Bundler {
     const raw = await readFile(this.fs, filepath);
     const ast = parse(raw, filepath);
 
-    const analyzed = analyzeModule(ast, basepath);
+    const analyzed = analyzeModule(ast, basepath, this.importMap);
     this.modulesMap.set(filepath, {
       ...analyzed,
       raw,

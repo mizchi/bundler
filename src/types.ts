@@ -61,3 +61,9 @@ export type Analyzed = {
   workerSources: WorkerSource[];
   pure: boolean;
 };
+
+export type ImportMap = {
+  imports: {
+    [name: string]: string;
+  };
+};

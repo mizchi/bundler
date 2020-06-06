@@ -1,16 +1,25 @@
 import path from "path";
-import type { AnalyzedChunk, Analyzed } from "./types";
+import type { AnalyzedChunk, Analyzed, ImportMap } from "./types";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 import { analyzeModule, isPureAstNode } from "./analyzer";
+import { resolveImportMap, resolveSource } from "./importMap";
 
-export function optimize(chunks: AnalyzedChunk[], entry: string) {
-  return eliminateUnusedImports(treeshakeExports(chunks, entry));
+export function optimize(
+  chunks: AnalyzedChunk[],
+  entry: string,
+  importMap: ImportMap
+) {
+  return eliminateUnusedImports(
+    treeshakeExports(chunks, entry, importMap),
+    importMap
+  );
 }
 
 export function treeshakeExports(
   chunks: AnalyzedChunk[],
-  entry: string
+  entry: string,
+  importMap: ImportMap
 ): AnalyzedChunk[] {
   const requiredExportsMap = buildRequiredExportsMap(chunks);
   // console.log("requiredExportsMap", requiredExportsMap);
@@ -46,7 +55,7 @@ export function treeshakeExports(
     });
     return {
       ...mod,
-      ...analyzeModule(cloned, path.dirname(mod.filepath)),
+      ...analyzeModule(cloned, path.dirname(mod.filepath), importMap),
       ast: cloned,
     };
   });
@@ -78,7 +87,8 @@ function buildRequiredExportsMap(chunks: AnalyzedChunk[]) {
 }
 
 export function eliminateUnusedImports(
-  chunks: AnalyzedChunk[]
+  chunks: AnalyzedChunk[],
+  importMap: ImportMap
 ): AnalyzedChunk[] {
   const optimized = chunks.map((chunk) => {
     const cloned = t.cloneNode(chunk.ast);
@@ -86,7 +96,8 @@ export function eliminateUnusedImports(
     traverse(cloned, {
       ImportDeclaration(nodePath) {
         const target = nodePath.node.source.value;
-        const abspath = path.join(basepath, target);
+        const abspath = resolveSource(target, basepath, importMap);
+
         const pure = isPureRec(abspath, chunks);
         if (!pure) {
           return;
@@ -102,7 +113,11 @@ export function eliminateUnusedImports(
         }
       },
     });
-    return { ...chunk, ...analyzeModule(cloned, basepath), ast: cloned };
+    return {
+      ...chunk,
+      ...analyzeModule(cloned, basepath, importMap),
+      ast: cloned,
+    };
   });
   const survived: AnalyzedChunk[] = [];
   function reaggregate(chunk: AnalyzedChunk) {
@@ -126,6 +141,7 @@ export function eliminateUnusedImports(
 }
 
 function isPureRec(filepath: string, chunks: AnalyzedChunk[]): boolean {
+  console.log("isPureRec", filepath);
   const mod = chunks.find((x) => x.filepath === filepath)!;
   return (
     mod.pure && mod.imports.every((imp) => isPureRec(imp.filepath, chunks))

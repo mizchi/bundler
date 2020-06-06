@@ -1,3 +1,3 @@
-// import { h } from "preact";
-import { h } from "./web_modules/preact.js";
-console.log(h("div", {}, "hello"));
+import { h } from "preact";
+import render from "preact-render-to-string";
+console.log(render(h("div", {}, "hello")));

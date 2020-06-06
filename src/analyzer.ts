@@ -8,12 +8,18 @@ import type {
   WorkerSource,
   Ast,
   AstNode,
+  ImportMap,
 } from "./types";
 
 import path from "path";
 import traverse from "@babel/traverse";
+import { resolveSource } from "./importMap";
 
-export function analyzeModule(ast: Ast, basepath: string): Analyzed {
+export function analyzeModule(
+  ast: Ast,
+  basepath: string,
+  importMap: ImportMap
+): Analyzed {
   let imports: Import[] = [];
   let exports_: Export[] = [];
   let dynamicImports: DynamicImport[] = [];
@@ -22,7 +28,16 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
   const refs = getGlobalsWithoutImports(ast);
   // console.log("globals", refs);
 
+  // rewrite source by import-map
   traverse(ast, {
+    ImportDeclaration(nodePath) {
+      const source = nodePath.node.source.value;
+      nodePath.node.source.value = resolveSource(source, basepath, importMap);
+    },
+  });
+
+  traverse(ast, {
+    // new Worker
     NewExpression(nodePath) {
       if (
         nodePath.node.callee.type === "Identifier" &&
@@ -31,7 +46,7 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
         if (nodePath.node.arguments[0].type === "StringLiteral") {
           const source = nodePath.node.arguments[0].value;
           workerSources.push({
-            filepath: path.join(basepath, source),
+            filepath: resolveSource(source, basepath, importMap),
             module: true,
           });
         }
@@ -43,16 +58,15 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
       if (nodePath.node.callee.type == "Import") {
         const arg = nodePath.node.arguments[0];
         if (arg.type === "StringLiteral") {
-          const abspath = path.join(basepath, arg.value);
           dynamicImports.push({
-            filepath: abspath,
+            filepath: resolveSource(arg.value, basepath, importMap),
           });
         }
       }
     },
     ImportDeclaration(nodePath) {
-      const target = nodePath.node.source.value;
-      const absPath = path.join(basepath, target);
+      const source = nodePath.node.source.value;
+      const absPath = resolveSource(source, basepath, importMap);
       const specifiers: Specifier[] = [];
 
       for (const specifier of nodePath.node.specifiers) {
@@ -133,7 +147,11 @@ export function analyzeModule(ast: Ast, basepath: string): Analyzed {
             );
 
             imports.push({
-              filepath: path.join(basepath, nodePath.node.source.value),
+              filepath: resolveSource(
+                nodePath.node.source.value,
+                basepath,
+                importMap
+              ),
               specifiers: specifiers,
             });
           }

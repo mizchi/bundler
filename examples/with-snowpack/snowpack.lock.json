@@ -1,5 +1,6 @@
 {
   "imports": {
-    "preact": "https://cdn.pika.dev/pin/preact@v10.4.4-TMS9ZInOJGpdAXfW4AwM/preact.js"
+    "preact": "https://cdn.pika.dev/pin/preact@v10.4.4-TMS9ZInOJGpdAXfW4AwM/preact.js",
+    "preact-render-to-string": "https://cdn.pika.dev/pin/preact-render-to-string@v5.1.9-qmVRQ30M2dgxTCStD4ag/preact-render-to-string.js"
   }
 }
