@@ -1,4 +1,3 @@
-import * as t from "@babel/types";
 import type {
   Export,
   Import,
@@ -10,8 +9,6 @@ import type {
   AstNode,
   ImportMap,
 } from "./types";
-
-import path from "path";
 import traverse from "@babel/traverse";
 import { resolveSource } from "./importMap";
 
@@ -186,7 +183,7 @@ export function getGlobalsWithoutImports(ast: Ast) {
   return ids;
 }
 
-const WHITELIST_NODE_TYPE: string[] = [
+const ALLOWLIST_NODE_TYPE: string[] = [
   // Statement
   "ImportDeclaration",
   "FunctionDeclaration",
@@ -294,5 +291,5 @@ export function isPureAstNode(node: AstNode) {
 }
 
 function isPureAstNodeType(type: string): boolean {
-  return WHITELIST_NODE_TYPE.includes(type);
+  return ALLOWLIST_NODE_TYPE.includes(type);
 }

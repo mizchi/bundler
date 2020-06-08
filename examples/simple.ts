@@ -1,4 +1,4 @@
-import { Bundler } from "../src/index";
+import { Bundler } from "@mizchi/bundler";
 import { format } from "prettier"; // install yourself
 const fileMap = {
   "/foo.js": "export default 1;",

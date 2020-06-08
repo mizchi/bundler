@@ -1,5 +1,4 @@
-import { Bundler } from "../src/index";
-import { format } from "prettier"; // install yourself
+import { Bundler } from "@mizchi/bundler";
 const fileMap = {
   "/foo.js": "export default 1;",
   // "/index.js": `import("./foo.js").then(m => console.log(m.default));`,
@@ -12,6 +11,5 @@ const bundler = new Bundler(fileMap);
   const chunks = await bundler.bundleChunks("/index.js", {
     publicPath: "/dist/",
   });
-  // console.log(format(code, { parser: "babel" }));
   console.log(chunks);
 })();

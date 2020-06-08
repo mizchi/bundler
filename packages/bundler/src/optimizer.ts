@@ -3,7 +3,7 @@ import type { AnalyzedChunk, Analyzed, ImportMap } from "./types";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 import { analyzeModule, isPureAstNode } from "./analyzer";
-import { resolveImportMap, resolveSource } from "./importMap";
+import { resolveSource } from "./importMap";
 
 export function optimize(
   chunks: AnalyzedChunk[],
@@ -141,7 +141,6 @@ export function eliminateUnusedImports(
 }
 
 function isPureRec(filepath: string, chunks: AnalyzedChunk[]): boolean {
-  console.log("isPureRec", filepath);
   const mod = chunks.find((x) => x.filepath === filepath)!;
   return (
     mod.pure && mod.imports.every((imp) => isPureRec(imp.filepath, chunks))
