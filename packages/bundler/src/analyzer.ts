@@ -1,4 +1,3 @@
-import * as t from "@babel/types";
 import type {
   Export,
   Import,
@@ -10,8 +9,6 @@ import type {
   AstNode,
   ImportMap,
 } from "./types";
-
-import path from "path";
 import traverse from "@babel/traverse";
 import { resolveSource } from "./importMap";
 

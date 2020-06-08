@@ -1,5 +1,5 @@
 export class Bundler {
-  constructor(files: { [key: string]: string });
+  constructor(files: { [key: string]: string }, importMap?: any);
   updateModule(filepath: string, content: string): Promise<void>;
   bundle(
     entry: string,
@@ -10,11 +10,11 @@ export class Bundler {
     options?: {
       optimize?: boolean;
       exposeToGlobal?: string | null;
-      pubicPath?: boolean;
+      publicPath?: string;
     }
   ): Promise<
     Array<
-      | { type: "entry"; builtCode: string }
+      | { type: "entry"; entry: string; builtCode: string }
       | { type: "chunk"; chunkName: string; builtCode: string }
     >
   >;

@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs/promises";
-import { Bundler } from "../../src/index";
+import { Bundler } from "@mizchi/bundler";
 const fileMap = {
   "/foo.js": `self.addEventListener("message", (ev) => console.log("received", ev))`,
   "/index.js": `

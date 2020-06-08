@@ -1,6 +1,6 @@
 // import { Bundler } from '.';
-import { Bundler } from "../../src/index";
-import { resolveImportMap } from "../../src/importMap";
+import { Bundler } from "@mizchi/bundler";
+import { resolveImportMap } from "@mizchi/bundler/src/importMap";
 
 import fs from "fs/promises";
 import path from "path";
