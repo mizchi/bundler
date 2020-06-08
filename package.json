@@ -2,6 +2,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "test": "jest",
     "demo": "ts-node -T -O '{\"module\":\"commonjs\"}' examples/browser/build.ts &&http-server -p 9999 -c-1 examples/browser/"
   },
   "devDependencies": {
